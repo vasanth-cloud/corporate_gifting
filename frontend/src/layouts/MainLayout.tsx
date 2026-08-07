@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   AppBar,
   Toolbar,
@@ -10,6 +11,10 @@ import {
   Box,
   Divider,
   Avatar,
+  IconButton,
+  Menu,
+  MenuItem,
+  Badge,
 } from "@mui/material";
 
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -21,10 +26,13 @@ import CategoryIcon from "@mui/icons-material/Category";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import CampaignIcon from "@mui/icons-material/Campaign";
 import AssessmentIcon from "@mui/icons-material/Assessment";
-import SettingsIcon from "@mui/icons-material/Settings";
 import CardGiftcardIcon from "@mui/icons-material/CardGiftcard";
+import LogoutIcon from "@mui/icons-material/Logout";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 
-import { Link, useLocation, Outlet } from "react-router-dom";
+import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 const drawerWidth = 260;
 
@@ -59,9 +67,9 @@ const menus = [
         path: "/vendors",
       },
       {
-        text: "Products",
+        text: "Gifts Catalog",
         icon: <InventoryIcon />,
-        path: "/products",
+        path: "/gifts",
       },
       {
         text: "Categories",
@@ -91,30 +99,42 @@ const menus = [
     section: "ANALYTICS",
     items: [
       {
-        text: "Reports",
+        text: "Reports & Export",
         icon: <AssessmentIcon />,
         path: "/reports",
       },
     ],
   },
-
-  {
-    section: "SYSTEM",
-    items: [
-      {
-        text: "Settings",
-        icon: <SettingsIcon />,
-        path: "/settings",
-      },
-    ],
-  },
 ];
 
-export default function MainLayout() {
+export default function MainLayout({ children }: { children?: React.ReactNode }) {
   const location = useLocation();
+  const navigate = useNavigate();
+  const { user, logout } = useAuth();
+
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+
+  const handleMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    handleMenuClose();
+    logout();
+    navigate("/login");
+  };
+
+  const userInitial = user?.full_name ? user.full_name.charAt(0).toUpperCase() : "A";
+  const userName = user?.full_name || "Admin User";
+  const userRole = user?.role ? user.role.replace("_", " ") : "SUPER ADMIN";
 
   return (
-    <Box sx={{ display: "flex", bgcolor: "#F5F7FB" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#F8FAFC" }}>
+      {/* Sidebar Drawer */}
       <Drawer
         variant="permanent"
         sx={{
@@ -122,178 +142,209 @@ export default function MainLayout() {
           flexShrink: 0,
           "& .MuiDrawer-paper": {
             width: drawerWidth,
-            bgcolor: "#1B1730",
-            color: "#fff",
-            borderRight: "none",
+            bgcolor: "#0F172A",
+            color: "#F8FAFC",
+            borderRight: "1px solid #1E293B",
+            boxShadow: "4px 0 24px rgba(0,0,0,0.12)",
           },
         }}
       >
         <Toolbar
           sx={{
             py: 3,
+            px: 2,
             justifyContent: "center",
           }}
         >
-          <Box
-            display="flex"
-            flexDirection="column"
-            alignItems="center"
-          >
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
             <Avatar
               sx={{
-                width: 65,
-                height: 65,
-                bgcolor: "#6C63FF",
-                mb: 1,
+                width: 44,
+                height: 44,
+                background: "linear-gradient(135deg, #6366F1 0%, #8B5CF6 100%)",
+                boxShadow: "0 4px 14px rgba(99, 102, 241, 0.4)",
               }}
             >
-              <CardGiftcardIcon fontSize="large" />
+              <CardGiftcardIcon />
             </Avatar>
-
-            <Typography
-              fontWeight="bold"
-              fontSize={20}
-            >
-              Corporate
-            </Typography>
-
-            <Typography
-              fontSize={13}
-              color="#BFBFD4"
-            >
-              Gifting Platform
-            </Typography>
+            <Box>
+              <Typography sx={{ fontWeight: 700, fontSize: 18, letterSpacing: -0.3, color: "#F8FAFC" }}>
+                GiftCorp
+              </Typography>
+              <Typography sx={{ fontSize: 11, color: "#94A3B8", fontWeight: 500 }}>
+                Corporate Gifting
+              </Typography>
+            </Box>
           </Box>
         </Toolbar>
 
-        <Divider sx={{ bgcolor: "#3D365F" }} />
+        <Divider sx={{ borderColor: "#1E293B" }} />
 
-        <Box
-          sx={{
-            overflowY: "auto",
-            flexGrow: 1,
-            mt: 2,
-          }}
-        >
+        <Box sx={{ overflowY: "auto", flexGrow: 1, py: 2 }}>
           {menus.map((group) => (
-            <Box key={group.section}>
+            <Box key={group.section} sx={{ mb: 2 }}>
               <Typography
                 sx={{
                   px: 3,
-                  pt: 2,
                   pb: 1,
-                  fontSize: 11,
-                  color: "#8F8BAF",
-                  fontWeight: 700,
-                  letterSpacing: 1,
+                  fontSize: 10,
+                  color: "#64748B",
+                  fontWeight: 800,
+                  letterSpacing: 1.2,
+                  textTransform: "uppercase",
                 }}
               >
                 {group.section}
               </Typography>
 
               <List disablePadding>
-                {group.items.map((item) => (
-                  <ListItemButton
-                    key={item.text}
-                    component={Link}
-                    to={item.path}
-                    selected={location.pathname === item.path}
-                    sx={{
-                      mx: 1.5,
-                      mb: 0.5,
-                      borderRadius: 2,
-
-                      "&.Mui-selected": {
-                        bgcolor: "#6C63FF",
-                      },
-
-                      "&.Mui-selected:hover": {
-                        bgcolor: "#6C63FF",
-                      },
-
-                      "&:hover": {
-                        bgcolor: "#302B52",
-                      },
-                    }}
-                  >
-                    <ListItemIcon
+                {group.items.map((item) => {
+                  const isActive = location.pathname === item.path;
+                  return (
+                    <ListItemButton
+                      key={item.text}
+                      component={Link}
+                      to={item.path}
+                      selected={isActive}
                       sx={{
-                        color: "#fff",
-                        minWidth: 40,
+                        mx: 1.5,
+                        mb: 0.5,
+                        borderRadius: 2,
+                        py: 1,
+                        transition: "all 0.2s ease",
+                        color: isActive ? "#FFFFFF" : "#94A3B8",
+                        bgcolor: isActive ? "rgba(99, 102, 241, 0.15)" : "transparent",
+                        borderLeft: isActive ? "4px solid #6366F1" : "4px solid transparent",
+                        "&:hover": {
+                          bgcolor: "rgba(255, 255, 255, 0.06)",
+                          color: "#F8FAFC",
+                        },
+                        "&.Mui-selected": {
+                          bgcolor: "rgba(99, 102, 241, 0.2)",
+                          color: "#FFFFFF",
+                        },
                       }}
                     >
-                      {item.icon}
-                    </ListItemIcon>
+                      <ListItemIcon
+                        sx={{
+                          color: isActive ? "#818CF8" : "#64748B",
+                          minWidth: 38,
+                        }}
+                      >
+                        {item.icon}
+                      </ListItemIcon>
 
-                    <ListItemText
-                      primary={item.text}
-                      primaryTypographyProps={{
-                        fontSize: 14,
-                      }}
-                    />
-                  </ListItemButton>
-                ))}
+                      <ListItemText
+                        primary={item.text}
+                        slotProps={{
+                          primary: {
+                            sx: {
+                              fontSize: 13.5,
+                              fontWeight: isActive ? 600 : 500,
+                            },
+                          },
+                        }}
+                      />
+                    </ListItemButton>
+                  );
+                })}
               </List>
             </Box>
           ))}
         </Box>
       </Drawer>
 
-      <Box
-        component="main"
-        sx={{
-          flexGrow: 1,
-        }}
-      >
+      {/* Main Content Container */}
+      <Box component="main" sx={{ flexGrow: 1, width: `calc(100% - ${drawerWidth}px)` }}>
+        {/* Top Navbar */}
         <AppBar
           elevation={0}
           position="sticky"
           sx={{
-            bgcolor: "#fff",
-            color: "#222",
-            borderBottom: "1px solid #ECECEC",
+            bgcolor: "#FFFFFF",
+            color: "#0F172A",
+            borderBottom: "1px solid #E2E8F0",
+            backdropFilter: "blur(8px)",
           }}
         >
-          <Toolbar
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-            }}
-          >
-            <Typography
-              fontSize={22}
-              fontWeight={700}
-            >
-              Corporate Gifting Platform
-            </Typography>
+          <Toolbar sx={{ display: "flex", justifyContent: "space-between", py: 0.5 }}>
+            <Box>
+              <Typography sx={{ fontSize: 18, fontWeight: 700, color: "#0F172A" }}>
+                {menus.flatMap(m => m.items).find(i => i.path === location.pathname)?.text || "Corporate Platform"}
+              </Typography>
+            </Box>
 
-            <Box display="flex" alignItems="center">
-              <Avatar
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <IconButton size="medium" sx={{ color: "#64748B" }}>
+                <Badge badgeContent={3} color="primary">
+                  <NotificationsIcon fontSize="small" />
+                </Badge>
+              </IconButton>
+
+              <Box
+                onClick={handleMenuOpen}
                 sx={{
-                  bgcolor: "#6C63FF",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 1.5,
+                  cursor: "pointer",
+                  p: 0.5,
+                  px: 1.5,
+                  borderRadius: 3,
+                  "&:hover": { bgcolor: "#F1F5F9" },
                 }}
               >
-                A
-              </Avatar>
-
-              <Box ml={2}>
-                <Typography fontWeight={600}>
-                  Admin
-                </Typography>
-
-                <Typography
-                  variant="body2"
-                  color="text.secondary"
+                <Avatar
+                  sx={{
+                    width: 36,
+                    height: 36,
+                    bgcolor: "#6366F1",
+                    fontWeight: 600,
+                    fontSize: 14,
+                  }}
                 >
-                  Super Admin
-                </Typography>
+                  {userInitial}
+                </Avatar>
+                <Box sx={{ display: { xs: "none", sm: "block" } }}>
+                  <Typography sx={{ fontWeight: 600, fontSize: 13, color: "#0F172A" }}>
+                    {userName}
+                  </Typography>
+                  <Typography sx={{ fontSize: 11, color: "#64748B", textTransform: "capitalize" }}>
+                    {userRole}
+                  </Typography>
+                </Box>
               </Box>
+
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleMenuClose}
+                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+                slotProps={{
+                  paper: {
+                    elevation: 3,
+                    sx: { mt: 1, borderRadius: 2, minWidth: 160 }
+                  }
+                }}
+              >
+                <MenuItem onClick={handleMenuClose}>
+                  <ListItemIcon><AccountCircleIcon fontSize="small" /></ListItemIcon>
+                  Profile
+                </MenuItem>
+                <Divider />
+                <MenuItem onClick={handleLogout} sx={{ color: "#EF4444" }}>
+                  <ListItemIcon><LogoutIcon fontSize="small" sx={{ color: "#EF4444" }} /></ListItemIcon>
+                  Logout
+                </MenuItem>
+              </Menu>
             </Box>
           </Toolbar>
         </AppBar>
 
-        <Box p={4}>
-          <Outlet />
+        {/* Page Body */}
+        <Box sx={{ p: { xs: 2, sm: 4 } }}>
+          {children || <Outlet />}
         </Box>
       </Box>
     </Box>

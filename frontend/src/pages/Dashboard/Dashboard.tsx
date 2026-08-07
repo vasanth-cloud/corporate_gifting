@@ -55,7 +55,6 @@ const FONT_DISPLAY = "'Sora', sans-serif";
 const FONT_BODY = "'Inter', sans-serif";
 const FONT_MONO = "'JetBrains Mono', monospace";
 
-// Inject Google Fonts once (purely cosmetic, no functional/backend change)
 function useDashboardFonts() {
   useEffect(() => {
     const id = "dashboard-fonts";
@@ -69,7 +68,6 @@ function useDashboardFonts() {
   }, []);
 }
 
-// ---- Small presentational helpers ---------------------------------------
 function KpiCard({
   icon,
   label,
@@ -94,7 +92,7 @@ function KpiCard({
       }}
     >
       <CardContent sx={{ p: 2.75 }}>
-        <Stack direction="row" spacing={1.5} alignItems="center" mb={1.5}>
+        <Stack spacing={1.5} sx={{ flexDirection: "row", alignItems: "center", mb: 1.5 }}>
           <Box
             sx={{
               width: 40,
@@ -161,7 +159,7 @@ function ChartCard({
       }}
     >
       <CardContent sx={{ p: 3 }}>
-        <Stack direction="row" spacing={1.25} alignItems="center" mb={2.5}>
+        <Stack spacing={1.25} sx={{ flexDirection: "row", alignItems: "center", mb: 2.5 }}>
           <Box
             sx={{
               width: 32,
@@ -224,12 +222,14 @@ function RankedList({
         return (
           <Box key={index}>
             <Stack
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              mb={0.75}
+              sx={{
+                flexDirection: "row",
+                justifyContent: "space-between",
+                alignItems: "center",
+                mb: 0.75,
+              }}
             >
-              <Stack direction="row" spacing={1.25} alignItems="center">
+              <Stack spacing={1.25} sx={{ flexDirection: "row", alignItems: "center" }}>
                 <Box
                   sx={{
                     width: 22,
@@ -283,7 +283,6 @@ function RankedList({
   );
 }
 
-// ---- Main component (logic untouched) ------------------------------------
 export default function Dashboard() {
   useDashboardFonts();
 
@@ -303,20 +302,20 @@ export default function Dashboard() {
     try {
       const [summaryData, orderData, revenueData, giftsData, companiesData, statusData] =
         await Promise.all([
-          getDashboardSummary(),
-          getMonthlyOrders(),
-          getMonthlyRevenue(),
-          getTopGifts(),
-          getTopCompanies(),
-          getOrderStatus(),
+          getDashboardSummary().catch(() => ({})),
+          getMonthlyOrders().catch(() => []),
+          getMonthlyRevenue().catch(() => []),
+          getTopGifts().catch(() => []),
+          getTopCompanies().catch(() => []),
+          getOrderStatus().catch(() => []),
         ]);
 
-      setSummary(summaryData);
-      setMonthlyOrders(orderData);
-      setMonthlyRevenue(revenueData);
-      setTopGifts(giftsData);
-      setTopCompanies(companiesData);
-      setOrderStatus(statusData);
+      setSummary(summaryData || {});
+      setMonthlyOrders(orderData || []);
+      setMonthlyRevenue(revenueData || []);
+      setTopGifts(giftsData || []);
+      setTopCompanies(companiesData || []);
+      setOrderStatus(statusData || []);
     } catch (err) {
       console.log(err);
     }
@@ -346,8 +345,8 @@ export default function Dashboard() {
 
   return (
     <Box sx={{ minHeight: "100vh", background: PAGE_BG }}>
-      <Box p={4}>
-        <Stack direction="row" spacing={1.5} alignItems="center" mb={0.5}>
+      <Box sx={{ p: 4 }}>
+        <Stack spacing={1.5} sx={{ flexDirection: "row", alignItems: "center", mb: 0.5 }}>
           <Gift size={26} color={PRIMARY} />
           <Typography
             sx={{
@@ -374,7 +373,7 @@ export default function Dashboard() {
 
         <Grid container spacing={3}>
           {/* Summary Cards */}
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               icon={<Building2 size={20} />}
               label="Total Companies"
@@ -383,7 +382,7 @@ export default function Dashboard() {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               icon={<Users size={20} />}
               label="Total Employees"
@@ -392,7 +391,7 @@ export default function Dashboard() {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               icon={<ShoppingBag size={20} />}
               label="Total Orders"
@@ -401,7 +400,7 @@ export default function Dashboard() {
             />
           </Grid>
 
-          <Grid item xs={12} sm={6} md={3}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               icon={<Wallet size={20} />}
               label="Total Revenue"
@@ -411,7 +410,7 @@ export default function Dashboard() {
           </Grid>
 
           {/* Monthly Orders Chart */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <ChartCard icon={<ShoppingBag size={17} />} title="Monthly Orders" accent={PRIMARY}>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={monthlyOrders}>
@@ -448,7 +447,7 @@ export default function Dashboard() {
           </Grid>
 
           {/* Monthly Revenue Chart */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <ChartCard icon={<Wallet size={17} />} title="Monthly Revenue" accent={GREEN}>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={monthlyRevenue}>
@@ -485,7 +484,7 @@ export default function Dashboard() {
           </Grid>
 
           {/* Top Gifts */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <ChartCard icon={<Gift size={17} />} title="Top Gifts" accent={GOLD}>
               <RankedList
                 items={topGifts}
@@ -498,7 +497,7 @@ export default function Dashboard() {
           </Grid>
 
           {/* Top Companies */}
-          <Grid item xs={12} md={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <ChartCard icon={<Briefcase size={17} />} title="Top Companies" accent={BLUE}>
               <RankedList
                 items={topCompanies}
@@ -511,10 +510,10 @@ export default function Dashboard() {
           </Grid>
 
           {/* Order Status */}
-          <Grid item xs={12}>
+          <Grid size={12}>
             <ChartCard icon={<Ticket size={17} />} title="Order Status" accent={CORAL}>
-              <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} md={7}>
+              <Grid container spacing={2} sx={{ alignItems: "center" }}>
+                <Grid size={{ xs: 12, md: 7 }}>
                   <Box sx={{ position: "relative" }}>
                     <ResponsiveContainer width="100%" height={300}>
                       <PieChart>
@@ -579,7 +578,7 @@ export default function Dashboard() {
                     </Box>
                   </Box>
                 </Grid>
-                <Grid item xs={12} md={5}>
+                <Grid size={{ xs: 12, md: 5 }}>
                   <Stack spacing={1.5}>
                     {orderStatus.map((s: any, index: number) => {
                       const pct = totalOrderStatusCount
@@ -588,11 +587,14 @@ export default function Dashboard() {
                       return (
                         <Stack
                           key={index}
-                          direction="row"
-                          alignItems="center"
-                          justifyContent="space-between"
+                          spacing={1}
+                          sx={{
+                            flexDirection: "row",
+                            alignItems: "center",
+                            justifyContent: "space-between",
+                          }}
                         >
-                          <Stack direction="row" spacing={1.25} alignItems="center">
+                          <Stack spacing={1.25} sx={{ flexDirection: "row", alignItems: "center" }}>
                             <Box
                               sx={{
                                 width: 10,

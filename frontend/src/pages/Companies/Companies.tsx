@@ -11,7 +11,6 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  MenuItem,
   IconButton,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
@@ -30,7 +29,7 @@ import {
   deleteCompany,
 } from "../../api/company";
 
-// ---- Design tokens (matches Dashboard) -----------------------------------
+// ---- Design tokens -----------------------------------
 const INK = "#1B1730";
 const INK_SOFT = "#6B6785";
 const SURFACE = "#FFFFFF";
@@ -46,7 +45,6 @@ const AVATAR_COLORS = [PRIMARY, GOLD, GREEN, CORAL, BLUE];
 const FONT_DISPLAY = "'Sora', sans-serif";
 const FONT_BODY = "'Inter', sans-serif";
 
-// Inject Google Fonts once (purely cosmetic, no functional/backend change)
 function usePageFonts() {
   useEffect(() => {
     const id = "app-fonts";
@@ -166,7 +164,7 @@ export default function Companies() {
       headerName: "Company",
       flex: 1.2,
       renderCell: (params) => (
-        <Stack direction="row" spacing={1.5} alignItems="center" height="100%">
+        <Stack spacing={1.5} sx={{ flexDirection: "row", alignItems: "center", height: "100%" }}>
           <Avatar
             sx={{
               width: 32,
@@ -191,7 +189,7 @@ export default function Companies() {
       headerName: "Email",
       flex: 1,
       renderCell: (params) => (
-        <Stack direction="row" spacing={1} alignItems="center" height="100%">
+        <Stack spacing={1} sx={{ flexDirection: "row", alignItems: "center", height: "100%" }}>
           <EmailOutlinedIcon sx={{ fontSize: 16, color: INK_SOFT }} />
           <Typography sx={{ fontFamily: FONT_BODY, fontSize: 13.5, color: INK_SOFT }}>
             {params.value}
@@ -204,7 +202,7 @@ export default function Companies() {
       headerName: "Phone",
       flex: 0.9,
       renderCell: (params) => (
-        <Stack direction="row" spacing={1} alignItems="center" height="100%">
+        <Stack spacing={1} sx={{ flexDirection: "row", alignItems: "center", height: "100%" }}>
           <PhoneOutlinedIcon sx={{ fontSize: 16, color: INK_SOFT }} />
           <Typography sx={{ fontFamily: FONT_BODY, fontSize: 13.5, color: INK_SOFT }}>
             {params.value}
@@ -217,7 +215,7 @@ export default function Companies() {
       headerName: "Address",
       flex: 0.8,
       renderCell: (params) => (
-        <Stack direction="row" spacing={1} alignItems="center" height="100%">
+        <Stack spacing={1} sx={{ flexDirection: "row", alignItems: "center", height: "100%" }}>
           <PlaceOutlinedIcon sx={{ fontSize: 16, color: INK_SOFT }} />
           <Typography sx={{ fontFamily: FONT_BODY, fontSize: 13.5, color: INK_SOFT }}>
             {params.value}
@@ -246,15 +244,17 @@ export default function Companies() {
 
   return (
     <Box sx={{ minHeight: "100vh", background: PAGE_BG }}>
-      <Box p={4}>
+      <Box sx={{ p: 4 }}>
         <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="flex-start"
-          mb={3}
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "flex-start",
+            mb: 3,
+          }}
         >
           <Box>
-            <Stack direction="row" spacing={1.5} alignItems="center" mb={0.5}>
+            <Stack spacing={1.5} sx={{ flexDirection: "row", alignItems: "center", mb: 0.5 }}>
               <ApartmentOutlinedIcon sx={{ color: PRIMARY, fontSize: 26 }} />
               <Typography
                 sx={{

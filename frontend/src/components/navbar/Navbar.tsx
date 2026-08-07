@@ -27,7 +27,7 @@ export default function Navbar() {
         <Box sx={{ flexGrow: 1 }} />
 
         <Typography sx={{ mr: 3 }}>
-          {user?.name}
+          {user?.full_name || "Admin"}
         </Typography>
 
         <Button color="inherit" onClick={logout}>

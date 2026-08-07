@@ -203,9 +203,9 @@ export default function Employees() {
   ];
 
   return (
-    <Box p={3}>
-      <Box display="flex" justifyContent="space-between" mb={3}>
-        <Typography variant="h4" fontWeight={700}>
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700 }}>
           Employees
         </Typography>
 
@@ -291,7 +291,7 @@ export default function Employees() {
             label="Joining Date"
             value={form.joining_date}
             onChange={handleChange}
-            InputLabelProps={{ shrink: true }}
+            slotProps={{ inputLabel: { shrink: true } }}
           />
 
           <TextField
@@ -300,7 +300,7 @@ export default function Employees() {
             label="Date of Birth"
             value={form.date_of_birth}
             onChange={handleChange}
-            InputLabelProps={{ shrink: true }}
+            slotProps={{ inputLabel: { shrink: true } }}
           />
 
           <TextField

@@ -1,8 +1,18 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.middleware.cors import CORSMiddleware
+from pathlib import Path
 
 from app.api.v1 import api_router
+from app.core.database import engine
+from app.models.base import Base
+import app.models  # Ensures all ORM models are registered with Base
+
+# Create DB tables if not exist
+Base.metadata.create_all(bind=engine)
+
+# Ensure uploads directory exists
+Path("uploads").mkdir(exist_ok=True)
 
 app = FastAPI(
     title="Corporate Gifting Platform",

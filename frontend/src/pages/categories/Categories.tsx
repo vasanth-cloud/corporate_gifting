@@ -11,26 +11,27 @@ import {
   TextField,
   Stack,
   Avatar,
+  IconButton,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import CardGiftcardIcon from "@mui/icons-material/CardGiftcard";
+import CategoryIcon from "@mui/icons-material/Category";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { DataGrid, GridActionsCellItem } from "@mui/x-data-grid";
+import { DataGrid } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
 import {
-  getGifts,
-  createGift,
-  updateGift,
-  deleteGift,
-} from "../../api/gift";
+  getGiftCategories,
+  createGiftCategory,
+  updateGiftCategory,
+  deleteGiftCategory,
+} from "../../api/giftCategory";
 
 const EMPTY_FORM = {
   name: "",
   description: "",
 };
 
-export default function Gifts() {
+export default function Categories() {
   const [rows, setRows] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [editing, setEditing] = useState(false);
@@ -38,12 +39,12 @@ export default function Gifts() {
   const [form, setForm] = useState(EMPTY_FORM);
 
   useEffect(() => {
-    loadGifts();
+    loadCategories();
   }, []);
 
-  const loadGifts = async () => {
+  const loadCategories = async () => {
     try {
-      const data = await getGifts();
+      const data = await getGiftCategories();
       setRows(data);
     } catch (err) {
       console.log(err);
@@ -60,19 +61,19 @@ export default function Gifts() {
   const handleSubmit = async () => {
     try {
       if (editing && selectedId) {
-        await updateGift(selectedId, form);
+        await updateGiftCategory(selectedId, form);
       } else {
-        await createGift(form);
+        await createGiftCategory(form);
       }
 
       setOpen(false);
       setEditing(false);
       setSelectedId(null);
       setForm(EMPTY_FORM);
-      loadGifts();
+      loadCategories();
     } catch (err) {
       console.log(err);
-      alert("Unable to save gift");
+      alert("Unable to save category");
     }
   };
 
@@ -81,15 +82,15 @@ export default function Gifts() {
     setSelectedId(row.id);
     setForm({
       name: row.name,
-      description: row.description,
+      description: row.description || "",
     });
     setOpen(true);
   };
 
   const handleDelete = async (id: number) => {
-    if (!window.confirm("Delete this gift?")) return;
-    await deleteGift(id);
-    loadGifts();
+    if (!window.confirm("Delete this category?")) return;
+    await deleteGiftCategory(id);
+    loadCategories();
   };
 
   const columns: GridColDef[] = [
@@ -100,20 +101,20 @@ export default function Gifts() {
     },
     {
       field: "name",
-      headerName: "Gift Name",
+      headerName: "Category Name",
       flex: 1,
       renderCell: (params) => (
-        <Stack direction="row" spacing={1} alignItems="center" height="100%">
+        <Stack spacing={1} sx={{ flexDirection: "row", alignItems: "center", height: "100%" }}>
           <Avatar
             sx={{
               width: 34,
               height: 34,
-              bgcolor: "#4C3A8C",
+              bgcolor: "#6366F1",
             }}
           >
-            <CardGiftcardIcon fontSize="small" />
+            <CategoryIcon fontSize="small" />
           </Avatar>
-          <Typography sx={{ fontSize: 14 }}>{params.value}</Typography>
+          <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{params.value}</Typography>
         </Stack>
       ),
     },
@@ -124,29 +125,27 @@ export default function Gifts() {
     },
     {
       field: "actions",
-      type: "actions",
       headerName: "Actions",
-      width: 120,
-      getActions: (params) => [
-        <GridActionsCellItem
-          icon={<EditIcon color="primary" />}
-          label="Edit"
-          onClick={() => handleEdit(params.row)}
-        />,
-        <GridActionsCellItem
-          icon={<DeleteIcon color="error" />}
-          label="Delete"
-          onClick={() => handleDelete(params.row.id)}
-        />,
-      ],
+      width: 140,
+      sortable: false,
+      renderCell: (params) => (
+        <>
+          <IconButton color="primary" onClick={() => handleEdit(params.row)}>
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton color="error" onClick={() => handleDelete(params.row.id)}>
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </>
+      ),
     },
   ];
 
   return (
-    <Box p={3}>
-      <Box display="flex" justifyContent="space-between" mb={3}>
-        <Typography variant="h4" fontWeight={700}>
-          Gifts
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700 }}>
+          Gift Categories
         </Typography>
 
         <Button
@@ -158,8 +157,9 @@ export default function Gifts() {
             setForm(EMPTY_FORM);
             setOpen(true);
           }}
+          sx={{ bgcolor: "#6366F1" }}
         >
-          Add Gift
+          Add Category
         </Button>
       </Box>
 
@@ -177,7 +177,7 @@ export default function Gifts() {
         fullWidth
         maxWidth="sm"
       >
-        <DialogTitle>{editing ? "Edit Gift" : "Add Gift"}</DialogTitle>
+        <DialogTitle>{editing ? "Edit Category" : "Add Category"}</DialogTitle>
 
         <DialogContent
           sx={{
@@ -188,7 +188,7 @@ export default function Gifts() {
           }}
         >
           <TextField
-            label="Gift Name"
+            label="Category Name"
             name="name"
             value={form.name}
             onChange={handleChange}
@@ -200,7 +200,7 @@ export default function Gifts() {
             value={form.description}
             onChange={handleChange}
             multiline
-            rows={4}
+            rows={3}
           />
         </DialogContent>
 
@@ -215,7 +215,7 @@ export default function Gifts() {
             Cancel
           </Button>
 
-          <Button variant="contained" onClick={handleSubmit}>
+          <Button variant="contained" onClick={handleSubmit} sx={{ bgcolor: "#6366F1" }}>
             {editing ? "Update" : "Save"}
           </Button>
         </DialogActions>

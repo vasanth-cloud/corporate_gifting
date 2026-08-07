@@ -162,9 +162,9 @@ export default function Vendors() {
   ];
 
   return (
-    <Box p={3}>
-      <Box display="flex" justifyContent="space-between" mb={3}>
-        <Typography variant="h4" fontWeight={700}>
+    <Box sx={{ p: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
+        <Typography variant="h4" sx={{ fontWeight: 700 }}>
           Vendors
         </Typography>
 
