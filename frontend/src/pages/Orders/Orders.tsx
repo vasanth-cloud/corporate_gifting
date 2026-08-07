@@ -113,17 +113,33 @@ export default function Orders() {
     } else {
       setEditingOrder(null);
       const randNo = `ORD-${Math.floor(10000 + Math.random() * 90000)}`;
+      const firstComp = companies.length > 0 ? String(companies[0].id) : "1";
+      const compEmps = employees.filter((e) => String(e.company_id) === firstComp);
+      const compCamps = campaigns.filter((c) => String(c.company_id) === firstComp);
+
       setFormValues({
         order_number: randNo,
-        company_id: companies.length > 0 ? String(companies[0].id) : "1",
-        employee_id: employees.length > 0 ? String(employees[0].id) : "1",
-        campaign_id: campaigns.length > 0 ? String(campaigns[0].id) : "1",
+        company_id: firstComp,
+        employee_id: compEmps.length > 0 ? String(compEmps[0].id) : employees.length > 0 ? String(employees[0].id) : "1",
+        campaign_id: compCamps.length > 0 ? String(compCamps[0].id) : campaigns.length > 0 ? String(campaigns[0].id) : "1",
         order_date: new Date().toISOString().split("T")[0],
         total_amount: "250.00",
         status: "PENDING",
       });
     }
     setDialogOpen(true);
+  };
+
+  const handleCompanyChange = (companyId: string) => {
+    const compEmps = employees.filter((e) => String(e.company_id) === companyId);
+    const compCamps = campaigns.filter((c) => String(c.company_id) === companyId);
+
+    setFormValues((prev) => ({
+      ...prev,
+      company_id: companyId,
+      employee_id: compEmps.length > 0 ? String(compEmps[0].id) : prev.employee_id,
+      campaign_id: compCamps.length > 0 ? String(compCamps[0].id) : prev.campaign_id,
+    }));
   };
 
   const handleCloseModal = () => {
@@ -176,7 +192,7 @@ export default function Orders() {
       loadData();
     } catch (err) {
       console.error(err);
-      alert("Error saving order.");
+      alert("Error saving order. Please verify that company, employee and campaign are selected.");
     } finally {
       setSaving(false);
     }
@@ -229,14 +245,22 @@ export default function Orders() {
     return matchesSearch && matchesStatus;
   });
 
+  const availableEmployees = employees.filter(
+    (e) => !formValues.company_id || String(e.company_id) === formValues.company_id
+  );
+
+  const availableCampaigns = campaigns.filter(
+    (c) => !formValues.company_id || String(c.company_id) === formValues.company_id
+  );
+
   return (
     <Box>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2, mb: 3 }}>
         <Box>
-          <Typography variant="h5" sx={{ fontWeight: 700, color: "#0F172A" }}>
+          <Typography variant="h5" sx={{ fontWeight: 700, color: "text.primary" }}>
             Orders & Fulfillments
           </Typography>
-          <Typography variant="body2" sx={{ color: "#64748B" }}>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
             Track gift orders, invoice generation, status workflows, and payment checkouts.
           </Typography>
         </Box>
@@ -267,7 +291,8 @@ export default function Orders() {
           p: 2,
           mb: 3,
           borderRadius: 3,
-          border: "1px solid #E2E8F0",
+          border: "1px solid",
+          borderColor: "divider",
           display: "flex",
           gap: 2,
           flexWrap: "wrap",
@@ -282,7 +307,7 @@ export default function Orders() {
             input: {
               startAdornment: (
                 <InputAdornment position="start">
-                  <SearchIcon sx={{ color: "#94A3B8" }} />
+                  <SearchIcon sx={{ color: "text.secondary" }} />
                 </InputAdornment>
               ),
             },
@@ -317,17 +342,17 @@ export default function Orders() {
       ) : filteredOrders.length === 0 ? (
         <Paper sx={{ p: 6, textAlign: "center", borderRadius: 3, border: "1px dashed #CBD5E1" }}>
           <ShoppingCartIcon sx={{ fontSize: 48, color: "#94A3B8", mb: 1 }} />
-          <Typography variant="h6" sx={{ color: "#64748B" }}>
+          <Typography variant="h6" sx={{ color: "text.secondary" }}>
             No orders found
           </Typography>
-          <Typography variant="body2" sx={{ color: "#94A3B8" }}>
+          <Typography variant="body2" sx={{ color: "text.secondary" }}>
             Click "Create New Order" to initiate a corporate gift shipment.
           </Typography>
         </Paper>
       ) : (
-        <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid #E2E8F0", overflow: "hidden" }}>
+        <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
           <Table>
-            <TableHead sx={{ bgcolor: "#F8FAFC" }}>
+            <TableHead sx={{ bgcolor: "background.paper" }}>
               <TableRow>
                 <TableCell sx={{ fontWeight: 700 }}>Order #</TableCell>
                 <TableCell sx={{ fontWeight: 700 }}>Company</TableCell>
@@ -342,10 +367,14 @@ export default function Orders() {
               {filteredOrders.map((ord) => {
                 const comp = companies.find((c) => c.id === ord.company_id);
                 const emp = employees.find((e) => e.id === ord.employee_id);
+                const empName = emp
+                  ? (emp.full_name || `${emp.first_name || ""} ${emp.last_name || ""}`.trim() || emp.work_email)
+                  : `Employee #${ord.employee_id}`;
+
                 return (
                   <TableRow key={ord.id} hover>
                     <TableCell>
-                      <Typography sx={{ fontWeight: 700, color: "#0F172A" }}>
+                      <Typography sx={{ fontWeight: 700, color: "text.primary" }}>
                         {ord.order_number}
                       </Typography>
                     </TableCell>
@@ -356,7 +385,7 @@ export default function Orders() {
                     </TableCell>
                     <TableCell>
                       <Typography sx={{ fontSize: 13.5 }}>
-                        {emp ? emp.full_name : `Employee #${ord.employee_id}`}
+                        {empName}
                       </Typography>
                     </TableCell>
                     <TableCell sx={{ fontSize: 13 }}>{ord.order_date}</TableCell>
@@ -436,7 +465,7 @@ export default function Orders() {
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
                 Payment Successful!
               </Typography>
-              <Typography variant="body2" sx={{ color: "#64748B" }}>
+              <Typography variant="body2" sx={{ color: "text.secondary" }}>
                 Order #{payingOrder?.order_number} status updated to APPROVED.
               </Typography>
             </Box>
@@ -509,13 +538,15 @@ export default function Orders() {
                   onChange={(e) => setFormValues({ ...formValues, order_date: e.target.value })}
                 />
               </Grid>
-              <Grid size={6}>
+
+              {/* Company Selection */}
+              <Grid size={12}>
                 <TextField
                   select
                   fullWidth
                   label="Company"
                   value={formValues.company_id}
-                  onChange={(e) => setFormValues({ ...formValues, company_id: e.target.value })}
+                  onChange={(e) => handleCompanyChange(e.target.value)}
                 >
                   {companies.map((c) => (
                     <MenuItem key={c.id} value={String(c.id)}>
@@ -524,6 +555,8 @@ export default function Orders() {
                   ))}
                 </TextField>
               </Grid>
+
+              {/* Filtered Recipient Employee */}
               <Grid size={6}>
                 <TextField
                   select
@@ -532,13 +565,22 @@ export default function Orders() {
                   value={formValues.employee_id}
                   onChange={(e) => setFormValues({ ...formValues, employee_id: e.target.value })}
                 >
-                  {employees.map((emp) => (
-                    <MenuItem key={emp.id} value={String(emp.id)}>
-                      {emp.full_name}
-                    </MenuItem>
-                  ))}
+                  {availableEmployees.length === 0 ? (
+                    <MenuItem value="" disabled>No employees for this company</MenuItem>
+                  ) : (
+                    availableEmployees.map((emp) => {
+                      const empName = emp.full_name || `${emp.first_name || ""} ${emp.last_name || ""}`.trim() || emp.work_email;
+                      return (
+                        <MenuItem key={emp.id} value={String(emp.id)}>
+                          {empName}
+                        </MenuItem>
+                      );
+                    })
+                  )}
                 </TextField>
               </Grid>
+
+              {/* Filtered Campaign */}
               <Grid size={6}>
                 <TextField
                   select
@@ -547,13 +589,18 @@ export default function Orders() {
                   value={formValues.campaign_id}
                   onChange={(e) => setFormValues({ ...formValues, campaign_id: e.target.value })}
                 >
-                  {campaigns.map((camp) => (
-                    <MenuItem key={camp.id} value={String(camp.id)}>
-                      {camp.title}
-                    </MenuItem>
-                  ))}
+                  {availableCampaigns.length === 0 ? (
+                    <MenuItem value="" disabled>No campaigns for this company</MenuItem>
+                  ) : (
+                    availableCampaigns.map((camp) => (
+                      <MenuItem key={camp.id} value={String(camp.id)}>
+                        {camp.title}
+                      </MenuItem>
+                    ))
+                  )}
                 </TextField>
               </Grid>
+
               <Grid size={6}>
                 <TextField
                   fullWidth
@@ -564,7 +611,7 @@ export default function Orders() {
                   onChange={(e) => setFormValues({ ...formValues, total_amount: e.target.value })}
                 />
               </Grid>
-              <Grid size={12}>
+              <Grid size={6}>
                 <TextField
                   select
                   fullWidth
