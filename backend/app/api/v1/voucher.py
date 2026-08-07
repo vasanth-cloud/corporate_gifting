@@ -10,6 +10,8 @@ from app.models.user import User, UserRole
 from app.models.voucher import Voucher
 from app.models.gift import Gift
 from app.models.order import Order, OrderStatus
+from app.models.employee import Employee
+from app.models.campaign import Campaign
 from app.schemas.voucher import VoucherCreate, VoucherClaimRequest, VoucherResponse
 from app.services.email_service import EmailService
 
@@ -93,19 +95,38 @@ def claim_voucher(req: VoucherClaimRequest, db: Session = Depends(get_db)):
             detail=f"Gift price (${gift.price:.2f}) exceeds voucher value (${voucher.amount:.2f}).",
         )
 
+    # Find valid employee & campaign for foreign key requirements
+    emp = db.query(Employee).filter(Employee.company_id == voucher.company_id).first()
+    if not emp:
+        emp = db.query(Employee).first()
+
+    camp = db.query(Campaign).filter(Campaign.company_id == voucher.company_id).first()
+    if not camp:
+        camp = db.query(Campaign).first()
+
+    if not emp or not camp:
+        raise HTTPException(status_code=400, detail="Database missing employee or campaign records.")
+
     voucher.is_redeemed = True
     voucher.redeemed_at = date.today()
 
     order = Order(
         order_number=f"VOUCH-{uuid.uuid4().hex[:6].upper()}",
         company_id=voucher.company_id,
-        employee_id=1,  # Claimed order
+        employee_id=emp.id,
+        campaign_id=camp.id,
         order_date=date.today(),
         total_amount=gift.price,
         status=OrderStatus.PROCESSING,
     )
     db.add(order)
     db.commit()
+
+    EmailService.send_order_status_update(
+        recipient_email=voucher.recipient_email,
+        order_number=order.order_number,
+        new_status="PROCESSING (Voucher Claimed)",
+    )
 
     return {
         "message": f"Successfully claimed {gift.name}!",
