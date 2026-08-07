@@ -13,10 +13,15 @@ import {
   FormControl,
   InputLabel,
   Select,
+  CircularProgress,
+  Alert,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import DownloadIcon from "@mui/icons-material/Download";
 import { DataGrid } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
+import axios from "axios";
 
 import {
   getEmployees,
@@ -46,8 +51,14 @@ export default function Employees() {
   const [companies, setCompanies] = useState<any[]>([]);
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
-
   const [form, setForm] = useState(EMPTY_FORM);
+
+  // Bulk CSV state
+  const [bulkOpen, setBulkOpen] = useState(false);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [bulkMessage, setBulkMessage] = useState("");
+  const [bulkError, setBulkError] = useState("");
 
   useEffect(() => {
     loadEmployees();
@@ -134,6 +145,43 @@ export default function Employees() {
     }
   };
 
+  const handleBulkUpload = async () => {
+    if (!csvFile) return;
+    setUploading(true);
+    setBulkMessage("");
+    setBulkError("");
+
+    const formData = new FormData();
+    formData.append("file", csvFile);
+
+    try {
+      const res = await axios.post("http://127.0.0.1:8000/api/v1/employees/bulk-csv", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+        },
+      });
+      setBulkMessage(res.data.message);
+      loadEmployees();
+    } catch (err: any) {
+      setBulkError(err.response?.data?.detail || "Failed to import CSV.");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const downloadSampleCSV = () => {
+    const csvContent =
+      "data:text/csv;charset=utf-8,employee_code,first_name,last_name,work_email,department,designation,company_id\nEMP-2001,John,Doe,john.doe@acme.com,Engineering,Developer,1\nEMP-2002,Jane,Smith,jane.smith@acme.com,HR,Manager,1";
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", "sample_employees.csv");
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const columns: GridColDef[] = [
     {
       field: "employee_code",
@@ -204,20 +252,84 @@ export default function Employees() {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3, flexWrap: "wrap", gap: 2 }}>
         <Typography variant="h4" sx={{ fontWeight: 700 }}>
           Employees
         </Typography>
 
-        <Button variant="contained" startIcon={<AddIcon />} onClick={openAddDialog}>
-          Add Employee
-        </Button>
+        <Box sx={{ display: "flex", gap: 1.5 }}>
+          <Button
+            variant="outlined"
+            startIcon={<CloudUploadIcon />}
+            onClick={() => setBulkOpen(true)}
+            sx={{ textTransform: "none" }}
+          >
+            Bulk CSV Upload
+          </Button>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={openAddDialog}>
+            Add Employee
+          </Button>
+        </Box>
       </Box>
 
       <Paper sx={{ height: 600 }}>
         <DataGrid rows={rows} columns={columns} pageSizeOptions={[10]} />
       </Paper>
 
+      {/* Bulk CSV Modal */}
+      <Dialog open={bulkOpen} onClose={() => setBulkOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>Bulk Employee Import (CSV)</DialogTitle>
+        <DialogContent dividers>
+          {bulkMessage && <Alert severity="success" sx={{ mb: 2 }}>{bulkMessage}</Alert>}
+          {bulkError && <Alert severity="error" sx={{ mb: 2 }}>{bulkError}</Alert>}
+
+          <Typography variant="body2" sx={{ mb: 2, color: "#64748B" }}>
+            Upload a CSV file containing employee records. Required columns: <code>first_name</code>, <code>work_email</code>.
+          </Typography>
+
+          <Button
+            variant="text"
+            startIcon={<DownloadIcon />}
+            onClick={downloadSampleCSV}
+            sx={{ mb: 3, textTransform: "none" }}
+          >
+            Download Sample CSV Template
+          </Button>
+
+          <Box sx={{ border: "2px dashed #CBD5E1", p: 4, borderRadius: 3, textAlign: "center" }}>
+            <input
+              type="file"
+              accept=".csv"
+              id="csv-input"
+              style={{ display: "none" }}
+              onChange={(e) => setCsvFile(e.target.files?.[0] || null)}
+            />
+            <label htmlFor="csv-input">
+              <Button variant="contained" component="span" startIcon={<CloudUploadIcon />}>
+                Choose CSV File
+              </Button>
+            </label>
+            {csvFile && (
+              <Typography variant="subtitle2" sx={{ mt: 2, color: "#6366F1", fontWeight: 600 }}>
+                Selected: {csvFile.name}
+              </Typography>
+            )}
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setBulkOpen(false)}>Close</Button>
+          <Button
+            variant="contained"
+            disabled={!csvFile || uploading}
+            onClick={handleBulkUpload}
+            sx={{ bgcolor: "#6366F1" }}
+          >
+            {uploading ? <CircularProgress size={24} color="inherit" /> : "Upload & Process"}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Create / Edit Dialog */}
       <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle>{editingId ? "Edit Employee" : "Add Employee"}</DialogTitle>
 

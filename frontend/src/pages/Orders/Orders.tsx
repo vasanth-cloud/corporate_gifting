@@ -29,12 +29,15 @@ import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
+import CreditCardIcon from "@mui/icons-material/CreditCard";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
 import { getOrders, createOrder, updateOrder, deleteOrder, downloadInvoice } from "../../api/order";
 import type { Order } from "../../api/order";
 import { getCompanies } from "../../api/company";
 import { getEmployees } from "../../api/employee";
 import { getCampaigns } from "../../api/campaign";
+import { createPaymentOrder, verifyPayment } from "../../api/payment";
 
 export default function Orders() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -51,6 +54,13 @@ export default function Orders() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingOrder, setEditingOrder] = useState<Order | null>(null);
   const [saving, setSaving] = useState(false);
+
+  // Payment Checkout Modal State
+  const [paymentOpen, setPaymentOpen] = useState(false);
+  const [payingOrder, setPayingOrder] = useState<Order | null>(null);
+  const [paymentMethod, setPaymentMethod] = useState("CARD");
+  const [processingPayment, setProcessingPayment] = useState(false);
+  const [paymentSuccess, setPaymentSuccess] = useState(false);
 
   const [formValues, setFormValues] = useState({
     order_number: "",
@@ -119,6 +129,28 @@ export default function Orders() {
   const handleCloseModal = () => {
     setDialogOpen(false);
     setEditingOrder(null);
+  };
+
+  const handleOpenPayment = (ord: Order) => {
+    setPayingOrder(ord);
+    setPaymentSuccess(false);
+    setPaymentOpen(true);
+  };
+
+  const handleProcessPayment = async () => {
+    if (!payingOrder?.id) return;
+    setProcessingPayment(true);
+    try {
+      const orderRes = await createPaymentOrder(payingOrder.id, paymentMethod);
+      await verifyPayment(orderRes.gateway_payment_id, payingOrder.id, "SUCCESS");
+      setPaymentSuccess(true);
+      loadData();
+    } catch (err) {
+      console.error(err);
+      alert("Payment processing failed.");
+    } finally {
+      setProcessingPayment(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -205,7 +237,7 @@ export default function Orders() {
             Orders & Fulfillments
           </Typography>
           <Typography variant="body2" sx={{ color: "#64748B" }}>
-            Track gift orders, invoice generation, status workflows, and corporate deliveries.
+            Track gift orders, invoice generation, status workflows, and payment checkouts.
           </Typography>
         </Box>
 
@@ -356,6 +388,13 @@ export default function Orders() {
                       </TextField>
                     </TableCell>
                     <TableCell align="right">
+                      {ord.status === "PENDING" && (
+                        <Tooltip title="Pay Now / Checkout">
+                          <IconButton size="small" sx={{ color: "#22C55E" }} onClick={() => handleOpenPayment(ord)}>
+                            <CreditCardIcon fontSize="small" />
+                          </IconButton>
+                        </Tooltip>
+                      )}
                       <Tooltip title="Download PDF Invoice">
                         <IconButton
                           size="small"
@@ -385,7 +424,65 @@ export default function Orders() {
         </Paper>
       )}
 
-      {/* Modal */}
+      {/* Payment Gateway Modal */}
+      <Dialog open={paymentOpen} onClose={() => setPaymentOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          Payment Checkout Simulation
+        </DialogTitle>
+        <DialogContent dividers>
+          {paymentSuccess ? (
+            <Box sx={{ textAlign: "center", py: 2 }}>
+              <CheckCircleIcon sx={{ fontSize: 60, color: "#22C55E", mb: 1 }} />
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                Payment Successful!
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#64748B" }}>
+                Order #{payingOrder?.order_number} status updated to APPROVED.
+              </Typography>
+            </Box>
+          ) : (
+            <Box sx={{ py: 1 }}>
+              <Typography variant="subtitle1" sx={{ fontWeight: 700, mb: 1 }}>
+                Order Total: ${Number(payingOrder?.total_amount).toFixed(2)}
+              </Typography>
+              <TextField
+                select
+                fullWidth
+                label="Payment Method"
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value)}
+                sx={{ mb: 2 }}
+              >
+                <MenuItem value="CARD">Credit / Debit Card</MenuItem>
+                <MenuItem value="UPI">UPI / NetBanking</MenuItem>
+              </TextField>
+              <TextField
+                fullWidth
+                label={paymentMethod === "CARD" ? "Card Number (Dummy)" : "UPI ID (Dummy)"}
+                defaultValue={paymentMethod === "CARD" ? "4242 •••• •••• 4242" : "user@upi"}
+                sx={{ mb: 2 }}
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setPaymentOpen(false)}>
+            {paymentSuccess ? "Close" : "Cancel"}
+          </Button>
+          {!paymentSuccess && (
+            <Button
+              variant="contained"
+              disabled={processingPayment}
+              onClick={handleProcessPayment}
+              sx={{ bgcolor: "#22C55E" }}
+            >
+              {processingPayment ? <CircularProgress size={24} color="inherit" /> : "Pay Now"}
+            </Button>
+          )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Create / Edit Modal */}
       <Dialog open={dialogOpen} onClose={handleCloseModal} maxWidth="sm" fullWidth>
         <form onSubmit={handleSave}>
           <DialogTitle sx={{ fontWeight: 700 }}>

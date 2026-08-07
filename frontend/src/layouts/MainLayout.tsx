@@ -15,6 +15,7 @@ import {
   Menu,
   MenuItem,
   Badge,
+  Tooltip,
 } from "@mui/material";
 
 import DashboardIcon from "@mui/icons-material/Dashboard";
@@ -30,9 +31,13 @@ import CardGiftcardIcon from "@mui/icons-material/CardGiftcard";
 import LogoutIcon from "@mui/icons-material/Logout";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import DarkModeIcon from "@mui/icons-material/DarkMode";
+import LightModeIcon from "@mui/icons-material/LightMode";
+import ConfirmationNumberIcon from "@mui/icons-material/ConfirmationNumber";
 
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
+import { useCustomTheme } from "../context/ThemeContext";
 
 const drawerWidth = 260;
 
@@ -92,6 +97,11 @@ const menus = [
         icon: <ShoppingCartIcon />,
         path: "/orders",
       },
+      {
+        text: "Employee Claim Portal",
+        icon: <ConfirmationNumberIcon />,
+        path: "/claim-gift",
+      },
     ],
   },
 
@@ -111,6 +121,7 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout } = useAuth();
+  const { mode, toggleTheme } = useCustomTheme();
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
@@ -133,7 +144,7 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
   const userRole = user?.role ? user.role.replace("_", " ") : "SUPER ADMIN";
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "#F8FAFC" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
       {/* Sidebar Drawer */}
       <Drawer
         variant="permanent"
@@ -261,21 +272,28 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
           elevation={0}
           position="sticky"
           sx={{
-            bgcolor: "#FFFFFF",
-            color: "#0F172A",
-            borderBottom: "1px solid #E2E8F0",
+            bgcolor: "background.paper",
+            color: "text.primary",
+            borderBottom: "1px solid",
+            borderColor: "divider",
             backdropFilter: "blur(8px)",
           }}
         >
           <Toolbar sx={{ display: "flex", justifyContent: "space-between", py: 0.5 }}>
             <Box>
-              <Typography sx={{ fontSize: 18, fontWeight: 700, color: "#0F172A" }}>
+              <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
                 {menus.flatMap(m => m.items).find(i => i.path === location.pathname)?.text || "Corporate Platform"}
               </Typography>
             </Box>
 
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-              <IconButton size="medium" sx={{ color: "#64748B" }}>
+              <Tooltip title={mode === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}>
+                <IconButton size="medium" onClick={toggleTheme} sx={{ color: "text.secondary" }}>
+                  {mode === "dark" ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
+                </IconButton>
+              </Tooltip>
+
+              <IconButton size="medium" sx={{ color: "text.secondary" }}>
                 <Badge badgeContent={3} color="primary">
                   <NotificationsIcon fontSize="small" />
                 </Badge>
@@ -291,7 +309,7 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
                   p: 0.5,
                   px: 1.5,
                   borderRadius: 3,
-                  "&:hover": { bgcolor: "#F1F5F9" },
+                  "&:hover": { bgcolor: "action.hover" },
                 }}
               >
                 <Avatar
@@ -306,10 +324,10 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
                   {userInitial}
                 </Avatar>
                 <Box sx={{ display: { xs: "none", sm: "block" } }}>
-                  <Typography sx={{ fontWeight: 600, fontSize: 13, color: "#0F172A" }}>
+                  <Typography sx={{ fontWeight: 600, fontSize: 13 }}>
                     {userName}
                   </Typography>
-                  <Typography sx={{ fontSize: 11, color: "#64748B", textTransform: "capitalize" }}>
+                  <Typography sx={{ fontSize: 11, color: "text.secondary", textTransform: "capitalize" }}>
                     {userRole}
                   </Typography>
                 </Box>

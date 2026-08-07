@@ -4,6 +4,7 @@ import MainLayout from "../layouts/MainLayout";
 import ProtectedRoute from "./ProtectedRoute";
 
 import Login from "../pages/Login/Login";
+import ClaimGift from "../pages/ClaimGift/ClaimGift";
 import Dashboard from "../pages/Dashboard/Dashboard";
 import Companies from "../pages/Companies/Companies";
 import Employees from "../pages/Employees/Employees";
@@ -17,8 +18,9 @@ import Reports from "../pages/Reports/Reports";
 export default function AppRoutes() {
   return (
     <Routes>
-      {/* Public Route */}
+      {/* Public Routes */}
       <Route path="/login" element={<Login />} />
+      <Route path="/claim-gift" element={<ClaimGift />} />
 
       {/* Protected App Routes */}
       <Route

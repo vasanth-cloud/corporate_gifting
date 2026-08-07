@@ -1,6 +1,6 @@
 import os
 import sys
-from datetime import date
+from datetime import date, timedelta
 
 # Ensure backend root is in sys.path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
@@ -16,6 +16,7 @@ from app.models.gift import Gift
 from app.models.vendor import Vendor
 from app.models.campaign import Campaign, CampaignStatus
 from app.models.order import Order, OrderStatus
+from app.models.voucher import Voucher
 
 def seed():
     print("Initializing Database schema...")
@@ -173,6 +174,22 @@ def seed():
             db.add(order)
             db.commit()
             print(f"Created Order: {order.order_number}")
+
+        # 9. Seed Sample Digital Voucher
+        voucher = db.query(Voucher).first()
+        if not voucher:
+            vouch = Voucher(
+                code="GC-REWARD",
+                amount=250.00,
+                recipient_email="sarah.jenkins@acmetech.com",
+                recipient_name="Sarah Jenkins",
+                expiry_date=date.today() + timedelta(days=60),
+                is_redeemed=False,
+                company_id=company.id,
+            )
+            db.add(vouch)
+            db.commit()
+            print("Created Sample Voucher: GC-REWARD ($250.00)")
 
         print("Database Seeding Completed Successfully!")
     except Exception as e:
