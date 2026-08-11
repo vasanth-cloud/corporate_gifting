@@ -21,6 +21,24 @@ import Budgets from "../pages/CompanyAdmin/Budgets";
 import Approvals from "../pages/CompanyAdmin/Approvals";
 import Deliveries from "../pages/Deliveries/Deliveries";
 
+import Users from "../pages/SuperAdmin/Users";
+import Payments from "../pages/SuperAdmin/Payments";
+import AuditLogs from "../pages/SuperAdmin/AuditLogs";
+import PlatformSettings from "../pages/SuperAdmin/PlatformSettings";
+
+import EmployeeDashboard from "../pages/Employee/EmployeeDashboard";
+import EmployeeGifts from "../pages/Employee/EmployeeGifts";
+import EmployeeAddress from "../pages/Employee/EmployeeAddress";
+import EmployeeOrders from "../pages/Employee/EmployeeOrders";
+import EmployeeProfile from "../pages/Employee/EmployeeProfile";
+
+import VendorDashboard from "../pages/Vendor/VendorDashboard";
+import VendorProducts from "../pages/Vendor/VendorProducts";
+import VendorInventory from "../pages/Vendor/VendorInventory";
+import VendorOrders from "../pages/Vendor/VendorOrders";
+import VendorPackaging from "../pages/Vendor/VendorPackaging";
+import VendorProfile from "../pages/Vendor/VendorProfile";
+
 export default function AppRoutes() {
   return (
     <Routes>
@@ -39,18 +57,22 @@ export default function AppRoutes() {
       >
         <Route index element={<Dashboard />} />
         
-        {/* Super Admin Panel */}
+        {/* 👑 1. Super Admin Panel Routes */}
         <Route path="super-admin/dashboard" element={<Dashboard />} />
         <Route path="super-admin/companies" element={<Companies />} />
+        <Route path="super-admin/users" element={<Users />} />
         <Route path="super-admin/vendors" element={<Vendors />} />
         <Route path="super-admin/products" element={<Gifts />} />
         <Route path="super-admin/categories" element={<Categories />} />
         <Route path="super-admin/campaigns" element={<Campaigns />} />
         <Route path="super-admin/orders" element={<Orders />} />
         <Route path="super-admin/deliveries" element={<Deliveries />} />
+        <Route path="super-admin/payments" element={<Payments />} />
         <Route path="super-admin/reports" element={<Reports />} />
+        <Route path="super-admin/audit-logs" element={<AuditLogs />} />
+        <Route path="super-admin/settings" element={<PlatformSettings />} />
 
-        {/* Company Admin Panel */}
+        {/* 🏢 2. Company Admin Panel Routes */}
         <Route path="company/dashboard" element={<Dashboard />} />
         <Route path="company/hr-managers" element={<HrManagers />} />
         <Route path="company/employees" element={<Employees />} />
@@ -61,8 +83,9 @@ export default function AppRoutes() {
         <Route path="company/orders" element={<Orders />} />
         <Route path="company/deliveries" element={<Deliveries />} />
         <Route path="company/reports" element={<Reports />} />
+        <Route path="company/settings" element={<PlatformSettings />} />
 
-        {/* HR Manager Panel */}
+        {/* 👔 3. HR Manager Panel Routes */}
         <Route path="hr/dashboard" element={<Dashboard />} />
         <Route path="hr/employees" element={<Employees />} />
         <Route path="hr/campaigns" element={<Campaigns />} />
@@ -71,20 +94,24 @@ export default function AppRoutes() {
         <Route path="hr/orders" element={<Orders />} />
         <Route path="hr/deliveries" element={<Deliveries />} />
 
-        {/* Employee Panel */}
-        <Route path="employee/dashboard" element={<Dashboard />} />
-        <Route path="employee/gifts" element={<Gifts />} />
-        <Route path="employee/orders" element={<Orders />} />
-        <Route path="employee/address" element={<ClaimGift />} />
+        {/* 👤 4. Employee Panel Routes */}
+        <Route path="employee/dashboard" element={<EmployeeDashboard />} />
+        <Route path="employee/gifts" element={<EmployeeGifts />} />
+        <Route path="employee/orders" element={<EmployeeOrders />} />
+        <Route path="employee/address" element={<EmployeeAddress />} />
+        <Route path="employee/tracking" element={<EmployeeOrders />} />
+        <Route path="employee/profile" element={<EmployeeProfile />} />
 
-        {/* Vendor Panel */}
-        <Route path="vendor/dashboard" element={<Dashboard />} />
-        <Route path="vendor/products" element={<Gifts />} />
-        <Route path="vendor/inventory" element={<Gifts />} />
-        <Route path="vendor/orders" element={<Orders />} />
+        {/* 🏪 5. Vendor Panel Routes */}
+        <Route path="vendor/dashboard" element={<VendorDashboard />} />
+        <Route path="vendor/products" element={<VendorProducts />} />
+        <Route path="vendor/inventory" element={<VendorInventory />} />
+        <Route path="vendor/orders" element={<VendorOrders />} />
+        <Route path="vendor/packaging" element={<VendorPackaging />} />
         <Route path="vendor/shipping" element={<Deliveries />} />
         <Route path="vendor/deliveries" element={<Deliveries />} />
         <Route path="vendor/reports" element={<Reports />} />
+        <Route path="vendor/profile" element={<VendorProfile />} />
 
         {/* Core Alias Routes */}
         <Route path="companies" element={<Companies />} />
