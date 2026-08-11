@@ -34,13 +34,15 @@ class EmployeeService:
         db: Session,
         search: str | None = None,
         department: str | None = None,
+        company_id: int | None = None,
         page: int = 1,
-        limit: int = 10,
+        limit: int = 100,
     ):
         return EmployeeRepository.get_all(
             db=db,
             search=search,
             department=department,
+            company_id=company_id,
             page=page,
             limit=limit,
         )

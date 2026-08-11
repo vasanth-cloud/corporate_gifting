@@ -36,6 +36,11 @@ import LightModeIcon from "@mui/icons-material/LightMode";
 import ConfirmationNumberIcon from "@mui/icons-material/ConfirmationNumber";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import HomeIcon from "@mui/icons-material/Home";
+import SettingsIcon from "@mui/icons-material/Settings";
+import ReceiptIcon from "@mui/icons-material/Receipt";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
+import ChecklistIcon from "@mui/icons-material/Checklist";
 
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -69,7 +74,7 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
   const userInitial = user?.full_name ? user.full_name.charAt(0).toUpperCase() : "A";
   const userName = user?.full_name || "Platform User";
 
-  // Role-Based Sidebars (5 Panels)
+  // Exact PRD 5-Panel Tree Structure
   const getMenusByRole = () => {
     switch (userRole) {
       case "SUPER_ADMIN":
@@ -77,14 +82,19 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
           {
             section: "SUPER ADMIN PANEL",
             items: [
-              { text: "Platform Dashboard", icon: <DashboardIcon />, path: "/super-admin/dashboard" },
+              { text: "Dashboard", icon: <DashboardIcon />, path: "/super-admin/dashboard" },
               { text: "Companies", icon: <BusinessIcon />, path: "/super-admin/companies" },
+              { text: "Users", icon: <PeopleIcon />, path: "/super-admin/users" },
               { text: "Vendors", icon: <StoreIcon />, path: "/super-admin/vendors" },
-              { text: "Gifts Catalog", icon: <InventoryIcon />, path: "/super-admin/products" },
+              { text: "Catalog & Products", icon: <InventoryIcon />, path: "/super-admin/products" },
               { text: "Categories", icon: <CategoryIcon />, path: "/super-admin/categories" },
               { text: "Campaigns", icon: <CampaignIcon />, path: "/super-admin/campaigns" },
-              { text: "Global Orders", icon: <ShoppingCartIcon />, path: "/super-admin/orders" },
-              { text: "Platform Reports", icon: <AssessmentIcon />, path: "/super-admin/reports" },
+              { text: "All Orders", icon: <ShoppingCartIcon />, path: "/super-admin/orders" },
+              { text: "Deliveries", icon: <LocalShippingIcon />, path: "/super-admin/deliveries" },
+              { text: "Payments", icon: <ReceiptIcon />, path: "/super-admin/payments" },
+              { text: "Reports", icon: <AssessmentIcon />, path: "/super-admin/reports" },
+              { text: "Audit Logs", icon: <VerifiedUserIcon />, path: "/super-admin/audit-logs" },
+              { text: "Platform Settings", icon: <SettingsIcon />, path: "/super-admin/settings" },
             ],
           },
         ];
@@ -94,13 +104,18 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
           {
             section: "COMPANY ADMIN PANEL",
             items: [
-              { text: "Company Dashboard", icon: <DashboardIcon />, path: "/company/dashboard" },
+              { text: "Dashboard", icon: <DashboardIcon />, path: "/company/dashboard" },
               { text: "Company Profile", icon: <BusinessIcon />, path: "/companies" },
-              { text: "Company Employees", icon: <PeopleIcon />, path: "/company/employees" },
-              { text: "Gifts Catalog", icon: <InventoryIcon />, path: "/gifts" },
-              { text: "Gifting Campaigns", icon: <CampaignIcon />, path: "/company/campaigns" },
-              { text: "Company Orders", icon: <ShoppingCartIcon />, path: "/company/orders" },
-              { text: "Reports & Expenses", icon: <AssessmentIcon />, path: "/company/reports" },
+              { text: "HR Managers", icon: <PeopleIcon />, path: "/company/hr-managers" },
+              { text: "Employees", icon: <PeopleIcon />, path: "/company/employees" },
+              { text: "Gift Catalog", icon: <InventoryIcon />, path: "/gifts" },
+              { text: "Campaigns", icon: <CampaignIcon />, path: "/company/campaigns" },
+              { text: "Recipients", icon: <ChecklistIcon />, path: "/company/recipients" },
+              { text: "Budgets", icon: <AccountBalanceWalletIcon />, path: "/company/budgets" },
+              { text: "Approvals", icon: <VerifiedUserIcon />, path: "/company/approvals" },
+              { text: "Orders", icon: <ShoppingCartIcon />, path: "/company/orders" },
+              { text: "Deliveries", icon: <LocalShippingIcon />, path: "/company/deliveries" },
+              { text: "Company Reports", icon: <AssessmentIcon />, path: "/company/reports" },
             ],
           },
         ];
@@ -110,12 +125,15 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
           {
             section: "HR MANAGER PANEL",
             items: [
-              { text: "HR Dashboard", icon: <DashboardIcon />, path: "/hr/dashboard" },
-              { text: "Employee Directory", icon: <PeopleIcon />, path: "/hr/employees" },
+              { text: "Dashboard", icon: <DashboardIcon />, path: "/hr/dashboard" },
+              { text: "Employees", icon: <PeopleIcon />, path: "/hr/employees" },
+              { text: "Campaigns", icon: <CampaignIcon />, path: "/hr/campaigns" },
+              { text: "Recipients", icon: <ChecklistIcon />, path: "/hr/recipients" },
+              { text: "Addresses", icon: <HomeIcon />, path: "/hr/addresses" },
               { text: "Gift Catalog", icon: <InventoryIcon />, path: "/gifts" },
-              { text: "Gifting Campaigns", icon: <CampaignIcon />, path: "/hr/campaigns" },
-              { text: "Fulfillment Orders", icon: <ShoppingCartIcon />, path: "/hr/orders" },
-              { text: "Reports", icon: <AssessmentIcon />, path: "/reports" },
+              { text: "Orders", icon: <ShoppingCartIcon />, path: "/hr/orders" },
+              { text: "Deliveries", icon: <LocalShippingIcon />, path: "/hr/deliveries" },
+              { text: "HR Reports", icon: <AssessmentIcon />, path: "/reports" },
             ],
           },
         ];
@@ -123,13 +141,15 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
       case "EMPLOYEE":
         return [
           {
-            section: "EMPLOYEE REWARD PANEL",
+            section: "EMPLOYEE PANEL",
             items: [
-              { text: "My Dashboard", icon: <DashboardIcon />, path: "/employee/dashboard" },
-              { text: "My Assigned Gifts", icon: <InventoryIcon />, path: "/employee/gifts" },
-              { text: "Claim Gift Voucher", icon: <ConfirmationNumberIcon />, path: "/claim-gift" },
-              { text: "My Orders & Tracking", icon: <ShoppingCartIcon />, path: "/employee/orders" },
-              { text: "My Shipping Address", icon: <HomeIcon />, path: "/employee/address" },
+              { text: "Dashboard", icon: <DashboardIcon />, path: "/employee/dashboard" },
+              { text: "My Gifts", icon: <InventoryIcon />, path: "/employee/gifts" },
+              { text: "Gift Selection", icon: <ConfirmationNumberIcon />, path: "/claim-gift" },
+              { text: "My Address", icon: <HomeIcon />, path: "/employee/address" },
+              { text: "My Orders", icon: <ShoppingCartIcon />, path: "/employee/orders" },
+              { text: "Delivery Tracking", icon: <LocalShippingIcon />, path: "/employee/tracking" },
+              { text: "My Profile", icon: <AccountCircleIcon />, path: "/employee/profile" },
             ],
           },
         ];
@@ -137,13 +157,17 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
       case "VENDOR":
         return [
           {
-            section: "VENDOR FULFILLMENT PANEL",
+            section: "VENDOR PANEL",
             items: [
-              { text: "Vendor Dashboard", icon: <DashboardIcon />, path: "/vendor/dashboard" },
-              { text: "Supplied Products", icon: <InventoryIcon />, path: "/vendor/products" },
-              { text: "Stock Inventory", icon: <StoreIcon />, path: "/vendor/inventory" },
+              { text: "Dashboard", icon: <DashboardIcon />, path: "/vendor/dashboard" },
+              { text: "Products", icon: <InventoryIcon />, path: "/vendor/products" },
+              { text: "Inventory", icon: <StoreIcon />, path: "/vendor/inventory" },
               { text: "Assigned Orders", icon: <ShoppingCartIcon />, path: "/vendor/orders" },
-              { text: "Shipment Tracking", icon: <LocalShippingIcon />, path: "/vendor/shipping" },
+              { text: "Packaging", icon: <CardGiftcardIcon />, path: "/vendor/packaging" },
+              { text: "Shipping", icon: <LocalShippingIcon />, path: "/vendor/shipping" },
+              { text: "Delivery Updates", icon: <LocalShippingIcon />, path: "/vendor/deliveries" },
+              { text: "Vendor Reports", icon: <AssessmentIcon />, path: "/vendor/reports" },
+              { text: "Vendor Profile", icon: <BusinessIcon />, path: "/vendor/profile" },
             ],
           },
         ];
@@ -294,7 +318,7 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
           <Toolbar sx={{ display: "flex", justifyContent: "space-between", py: 0.5 }}>
             <Box>
               <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
-                {menus.flatMap(m => m.items).find(i => i.path === location.pathname)?.text || "Enterprise Platform"}
+                {menus.flatMap(m => m.items).find(i => i.path === location.pathname)?.text || "Enterprise Gifting Platform"}
               </Typography>
             </Box>
 

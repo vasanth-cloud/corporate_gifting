@@ -60,8 +60,18 @@ class OrderService:
         return order
 
     @staticmethod
-    def get_all(db: Session):
-        return OrderRepository.get_all(db)
+    def get_all(
+        db: Session,
+        company_id: int | None = None,
+        employee_id: int | None = None,
+        vendor_id: int | None = None,
+    ):
+        return OrderRepository.get_all(
+            db,
+            company_id=company_id,
+            employee_id=employee_id,
+            vendor_id=vendor_id,
+        )
 
     @staticmethod
     def get_by_id(db: Session, order_id: int):

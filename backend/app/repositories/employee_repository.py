@@ -18,10 +18,14 @@ class EmployeeRepository:
         db: Session,
         search: str | None = None,
         department: str | None = None,
+        company_id: int | None = None,
         page: int = 1,
-        limit: int = 10,
+        limit: int = 100,
     ):
         query = db.query(Employee)
+
+        if company_id:
+            query = query.filter(Employee.company_id == company_id)
 
         if search:
             query = query.filter(
@@ -42,14 +46,6 @@ class EmployeeRepository:
             query.offset((page - 1) * limit)
             .limit(limit)
             .all()
-        )
-    
-    @staticmethod
-    def get_by_id(db, employee_id: int):
-        return (
-            db.query(Employee)
-            .filter(Employee.id == employee_id)
-            .first()
         )
 
     @staticmethod
