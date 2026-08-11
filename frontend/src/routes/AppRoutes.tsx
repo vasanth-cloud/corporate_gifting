@@ -15,6 +15,12 @@ import Campaigns from "../pages/Campaigns/Campaigns";
 import Orders from "../pages/Orders/Orders";
 import Reports from "../pages/Reports/Reports";
 
+import HrManagers from "../pages/CompanyAdmin/HrManagers";
+import Recipients from "../pages/CompanyAdmin/Recipients";
+import Budgets from "../pages/CompanyAdmin/Budgets";
+import Approvals from "../pages/CompanyAdmin/Approvals";
+import Deliveries from "../pages/Deliveries/Deliveries";
+
 export default function AppRoutes() {
   return (
     <Routes>
@@ -41,20 +47,29 @@ export default function AppRoutes() {
         <Route path="super-admin/categories" element={<Categories />} />
         <Route path="super-admin/campaigns" element={<Campaigns />} />
         <Route path="super-admin/orders" element={<Orders />} />
+        <Route path="super-admin/deliveries" element={<Deliveries />} />
         <Route path="super-admin/reports" element={<Reports />} />
 
         {/* Company Admin Panel */}
         <Route path="company/dashboard" element={<Dashboard />} />
+        <Route path="company/hr-managers" element={<HrManagers />} />
         <Route path="company/employees" element={<Employees />} />
         <Route path="company/campaigns" element={<Campaigns />} />
+        <Route path="company/recipients" element={<Recipients />} />
+        <Route path="company/budgets" element={<Budgets />} />
+        <Route path="company/approvals" element={<Approvals />} />
         <Route path="company/orders" element={<Orders />} />
+        <Route path="company/deliveries" element={<Deliveries />} />
         <Route path="company/reports" element={<Reports />} />
 
         {/* HR Manager Panel */}
         <Route path="hr/dashboard" element={<Dashboard />} />
         <Route path="hr/employees" element={<Employees />} />
         <Route path="hr/campaigns" element={<Campaigns />} />
+        <Route path="hr/recipients" element={<Recipients />} />
+        <Route path="hr/addresses" element={<Recipients />} />
         <Route path="hr/orders" element={<Orders />} />
+        <Route path="hr/deliveries" element={<Deliveries />} />
 
         {/* Employee Panel */}
         <Route path="employee/dashboard" element={<Dashboard />} />
@@ -67,7 +82,9 @@ export default function AppRoutes() {
         <Route path="vendor/products" element={<Gifts />} />
         <Route path="vendor/inventory" element={<Gifts />} />
         <Route path="vendor/orders" element={<Orders />} />
-        <Route path="vendor/shipping" element={<Orders />} />
+        <Route path="vendor/shipping" element={<Deliveries />} />
+        <Route path="vendor/deliveries" element={<Deliveries />} />
+        <Route path="vendor/reports" element={<Reports />} />
 
         {/* Core Alias Routes */}
         <Route path="companies" element={<Companies />} />
