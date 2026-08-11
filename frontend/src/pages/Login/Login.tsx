@@ -48,11 +48,11 @@ export default function Login() {
     setSuccess("");
 
     try {
+      let loggedUser = null;
       if (tab === 0) {
         // Login
         const res = await loginUser(email, password);
-        await login(res.access_token);
-        navigate("/");
+        loggedUser = await login(res.access_token);
       } else {
         // Register
         await registerUser({
@@ -63,8 +63,29 @@ export default function Login() {
         });
         setSuccess("Account registered successfully! Logging you in...");
         const res = await loginUser(email, password);
-        await login(res.access_token);
-        navigate("/");
+        loggedUser = await login(res.access_token);
+      }
+
+      // Role-Based Panel Redirection
+      switch (loggedUser?.role) {
+        case "SUPER_ADMIN":
+          navigate("/super-admin/dashboard");
+          break;
+        case "COMPANY_ADMIN":
+          navigate("/company/dashboard");
+          break;
+        case "HR_MANAGER":
+          navigate("/hr/dashboard");
+          break;
+        case "EMPLOYEE":
+          navigate("/employee/dashboard");
+          break;
+        case "VENDOR":
+          navigate("/vendor/dashboard");
+          break;
+        default:
+          navigate("/");
+          break;
       }
     } catch (err: any) {
       console.error("Auth error:", err);

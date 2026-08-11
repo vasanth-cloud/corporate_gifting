@@ -25,20 +25,21 @@ def seed():
     db = SessionLocal()
 
     try:
-        # 1. Super Admin User
-        admin = db.query(User).filter(User.email == "admin@corporate.com").first()
-        if not admin:
-            admin = User(
-                full_name="Super Admin",
-                email="admin@corporate.com",
-                phone="+1-800-555-0199",
-                password_hash=hash_password("admin123"),
-                role=UserRole.SUPER_ADMIN,
-                is_active=True,
-                is_verified=True,
-            )
-            db.add(admin)
-            print("Created Admin User: admin@corporate.com / admin123")
+        # 1. Seed Dedicated Users for all Role Types
+        user_list = [
+            {"full_name": "Super Admin", "email": "admin@corporate.com", "phone": "+1-800-555-0199", "password_hash": hash_password("admin123"), "role": UserRole.SUPER_ADMIN},
+            {"full_name": "Google Company Admin", "email": "companyadmin@google.com", "phone": "+1-650-253-0000", "password_hash": hash_password("google123"), "role": UserRole.COMPANY_ADMIN},
+            {"full_name": "Acme HR Manager", "email": "hr@acmetech.com", "phone": "+1-555-0144", "password_hash": hash_password("hr123"), "role": UserRole.HR_MANAGER},
+            {"full_name": "Global Tech Vendor", "email": "vendor@globalsupplies.com", "phone": "+1-555-0199", "password_hash": hash_password("vendor123"), "role": UserRole.VENDOR},
+            {"full_name": "Sarah Jenkins (Employee)", "email": "sarah.jenkins@acmetech.com", "phone": "+1-555-0188", "password_hash": hash_password("emp123"), "role": UserRole.EMPLOYEE},
+        ]
+
+        for u in user_list:
+            existing_u = db.query(User).filter(User.email == u["email"]).first()
+            if not existing_u:
+                db.add(User(**u, is_active=True, is_verified=True))
+        db.commit()
+        print("Created User Accounts for All 5 Roles!")
 
         # 2. Seed Multiple Companies
         comp_data = [

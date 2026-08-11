@@ -8,3 +8,7 @@ from app.models.campaign import Campaign
 from app.models.order import Order
 from app.models.order_item import OrderItem
 from app.models.voucher import Voucher
+from app.models.audit_log import AuditLog
+from app.models.notification import Notification
+from app.models.address import Address
+from app.models.approval import Approval

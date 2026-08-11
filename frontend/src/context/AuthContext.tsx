@@ -8,13 +8,14 @@ export interface User {
   email?: string;
   phone?: string;
   role?: string;
+  company_id?: number;
   is_active?: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
-  login: (token: string) => Promise<void>;
+  login: (token: string) => Promise<User | null>;
   logout: () => void;
   isLoading: boolean;
 }
@@ -22,7 +23,7 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({
   user: null,
   token: null,
-  login: async () => {},
+  login: async () => null,
   logout: () => {},
   isLoading: true,
 });
@@ -32,19 +33,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [token, setToken] = useState<string | null>(localStorage.getItem("token"));
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const fetchCurrentUser = async () => {
+  const fetchCurrentUser = async (): Promise<User | null> => {
     try {
       if (localStorage.getItem("token")) {
         const userData = await getMe();
         setUser(userData);
+        return userData;
       } else {
         setUser(null);
+        return null;
       }
     } catch (err) {
       console.error("Failed to fetch user context", err);
       setUser(null);
       localStorage.removeItem("token");
       setToken(null);
+      return null;
     } finally {
       setIsLoading(false);
     }
@@ -58,10 +62,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [token]);
 
-  const login = async (newToken: string) => {
+  const login = async (newToken: string): Promise<User | null> => {
     localStorage.setItem("token", newToken);
     setToken(newToken);
-    await fetchCurrentUser();
+    return await fetchCurrentUser();
   };
 
   const logout = () => {

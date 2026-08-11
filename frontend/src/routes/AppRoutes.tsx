@@ -22,7 +22,7 @@ export default function AppRoutes() {
       <Route path="/login" element={<Login />} />
       <Route path="/claim-gift" element={<ClaimGift />} />
 
-      {/* Protected App Routes */}
+      {/* Default Protected Shell */}
       <Route
         path="/*"
         element={
@@ -32,6 +32,44 @@ export default function AppRoutes() {
         }
       >
         <Route index element={<Dashboard />} />
+        
+        {/* Super Admin Panel */}
+        <Route path="super-admin/dashboard" element={<Dashboard />} />
+        <Route path="super-admin/companies" element={<Companies />} />
+        <Route path="super-admin/vendors" element={<Vendors />} />
+        <Route path="super-admin/products" element={<Gifts />} />
+        <Route path="super-admin/categories" element={<Categories />} />
+        <Route path="super-admin/campaigns" element={<Campaigns />} />
+        <Route path="super-admin/orders" element={<Orders />} />
+        <Route path="super-admin/reports" element={<Reports />} />
+
+        {/* Company Admin Panel */}
+        <Route path="company/dashboard" element={<Dashboard />} />
+        <Route path="company/employees" element={<Employees />} />
+        <Route path="company/campaigns" element={<Campaigns />} />
+        <Route path="company/orders" element={<Orders />} />
+        <Route path="company/reports" element={<Reports />} />
+
+        {/* HR Manager Panel */}
+        <Route path="hr/dashboard" element={<Dashboard />} />
+        <Route path="hr/employees" element={<Employees />} />
+        <Route path="hr/campaigns" element={<Campaigns />} />
+        <Route path="hr/orders" element={<Orders />} />
+
+        {/* Employee Panel */}
+        <Route path="employee/dashboard" element={<Dashboard />} />
+        <Route path="employee/gifts" element={<Gifts />} />
+        <Route path="employee/orders" element={<Orders />} />
+        <Route path="employee/address" element={<ClaimGift />} />
+
+        {/* Vendor Panel */}
+        <Route path="vendor/dashboard" element={<Dashboard />} />
+        <Route path="vendor/products" element={<Gifts />} />
+        <Route path="vendor/inventory" element={<Gifts />} />
+        <Route path="vendor/orders" element={<Orders />} />
+        <Route path="vendor/shipping" element={<Orders />} />
+
+        {/* Core Alias Routes */}
         <Route path="companies" element={<Companies />} />
         <Route path="employees" element={<Employees />} />
         <Route path="vendors" element={<Vendors />} />
@@ -41,6 +79,7 @@ export default function AppRoutes() {
         <Route path="campaigns" element={<Campaigns />} />
         <Route path="orders" element={<Orders />} />
         <Route path="reports" element={<Reports />} />
+
         <Route path="*" element={<Navigate to="/" replace />} />
       </Route>
     </Routes>

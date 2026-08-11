@@ -34,88 +34,14 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import DarkModeIcon from "@mui/icons-material/DarkMode";
 import LightModeIcon from "@mui/icons-material/LightMode";
 import ConfirmationNumberIcon from "@mui/icons-material/ConfirmationNumber";
+import LocalShippingIcon from "@mui/icons-material/LocalShipping";
+import HomeIcon from "@mui/icons-material/Home";
 
 import { Link, useLocation, Outlet, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useCustomTheme } from "../context/ThemeContext";
 
 const drawerWidth = 260;
-
-const menus = [
-  {
-    section: "MAIN",
-    items: [
-      {
-        text: "Dashboard",
-        icon: <DashboardIcon />,
-        path: "/",
-      },
-    ],
-  },
-
-  {
-    section: "MASTER DATA",
-    items: [
-      {
-        text: "Companies",
-        icon: <BusinessIcon />,
-        path: "/companies",
-      },
-      {
-        text: "Employees",
-        icon: <PeopleIcon />,
-        path: "/employees",
-      },
-      {
-        text: "Vendors",
-        icon: <StoreIcon />,
-        path: "/vendors",
-      },
-      {
-        text: "Gifts Catalog",
-        icon: <InventoryIcon />,
-        path: "/gifts",
-      },
-      {
-        text: "Categories",
-        icon: <CategoryIcon />,
-        path: "/categories",
-      },
-    ],
-  },
-
-  {
-    section: "OPERATIONS",
-    items: [
-      {
-        text: "Campaigns",
-        icon: <CampaignIcon />,
-        path: "/campaigns",
-      },
-      {
-        text: "Orders",
-        icon: <ShoppingCartIcon />,
-        path: "/orders",
-      },
-      {
-        text: "Employee Claim Portal",
-        icon: <ConfirmationNumberIcon />,
-        path: "/claim-gift",
-      },
-    ],
-  },
-
-  {
-    section: "ANALYTICS",
-    items: [
-      {
-        text: "Reports & Export",
-        icon: <AssessmentIcon />,
-        path: "/reports",
-      },
-    ],
-  },
-];
 
 export default function MainLayout({ children }: { children?: React.ReactNode }) {
   const location = useLocation();
@@ -139,9 +65,95 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
     navigate("/login");
   };
 
+  const userRole = user?.role || "SUPER_ADMIN";
   const userInitial = user?.full_name ? user.full_name.charAt(0).toUpperCase() : "A";
-  const userName = user?.full_name || "Admin User";
-  const userRole = user?.role ? user.role.replace("_", " ") : "SUPER ADMIN";
+  const userName = user?.full_name || "Platform User";
+
+  // Role-Based Sidebars (5 Panels)
+  const getMenusByRole = () => {
+    switch (userRole) {
+      case "SUPER_ADMIN":
+        return [
+          {
+            section: "SUPER ADMIN PANEL",
+            items: [
+              { text: "Platform Dashboard", icon: <DashboardIcon />, path: "/super-admin/dashboard" },
+              { text: "Companies", icon: <BusinessIcon />, path: "/super-admin/companies" },
+              { text: "Vendors", icon: <StoreIcon />, path: "/super-admin/vendors" },
+              { text: "Gifts Catalog", icon: <InventoryIcon />, path: "/super-admin/products" },
+              { text: "Categories", icon: <CategoryIcon />, path: "/super-admin/categories" },
+              { text: "Campaigns", icon: <CampaignIcon />, path: "/super-admin/campaigns" },
+              { text: "Global Orders", icon: <ShoppingCartIcon />, path: "/super-admin/orders" },
+              { text: "Platform Reports", icon: <AssessmentIcon />, path: "/super-admin/reports" },
+            ],
+          },
+        ];
+
+      case "COMPANY_ADMIN":
+        return [
+          {
+            section: "COMPANY ADMIN PANEL",
+            items: [
+              { text: "Company Dashboard", icon: <DashboardIcon />, path: "/company/dashboard" },
+              { text: "Company Profile", icon: <BusinessIcon />, path: "/companies" },
+              { text: "Company Employees", icon: <PeopleIcon />, path: "/company/employees" },
+              { text: "Gifts Catalog", icon: <InventoryIcon />, path: "/gifts" },
+              { text: "Gifting Campaigns", icon: <CampaignIcon />, path: "/company/campaigns" },
+              { text: "Company Orders", icon: <ShoppingCartIcon />, path: "/company/orders" },
+              { text: "Reports & Expenses", icon: <AssessmentIcon />, path: "/company/reports" },
+            ],
+          },
+        ];
+
+      case "HR_MANAGER":
+        return [
+          {
+            section: "HR MANAGER PANEL",
+            items: [
+              { text: "HR Dashboard", icon: <DashboardIcon />, path: "/hr/dashboard" },
+              { text: "Employee Directory", icon: <PeopleIcon />, path: "/hr/employees" },
+              { text: "Gift Catalog", icon: <InventoryIcon />, path: "/gifts" },
+              { text: "Gifting Campaigns", icon: <CampaignIcon />, path: "/hr/campaigns" },
+              { text: "Fulfillment Orders", icon: <ShoppingCartIcon />, path: "/hr/orders" },
+              { text: "Reports", icon: <AssessmentIcon />, path: "/reports" },
+            ],
+          },
+        ];
+
+      case "EMPLOYEE":
+        return [
+          {
+            section: "EMPLOYEE REWARD PANEL",
+            items: [
+              { text: "My Dashboard", icon: <DashboardIcon />, path: "/employee/dashboard" },
+              { text: "My Assigned Gifts", icon: <InventoryIcon />, path: "/employee/gifts" },
+              { text: "Claim Gift Voucher", icon: <ConfirmationNumberIcon />, path: "/claim-gift" },
+              { text: "My Orders & Tracking", icon: <ShoppingCartIcon />, path: "/employee/orders" },
+              { text: "My Shipping Address", icon: <HomeIcon />, path: "/employee/address" },
+            ],
+          },
+        ];
+
+      case "VENDOR":
+        return [
+          {
+            section: "VENDOR FULFILLMENT PANEL",
+            items: [
+              { text: "Vendor Dashboard", icon: <DashboardIcon />, path: "/vendor/dashboard" },
+              { text: "Supplied Products", icon: <InventoryIcon />, path: "/vendor/products" },
+              { text: "Stock Inventory", icon: <StoreIcon />, path: "/vendor/inventory" },
+              { text: "Assigned Orders", icon: <ShoppingCartIcon />, path: "/vendor/orders" },
+              { text: "Shipment Tracking", icon: <LocalShippingIcon />, path: "/vendor/shipping" },
+            ],
+          },
+        ];
+
+      default:
+        return [];
+    }
+  };
+
+  const menus = getMenusByRole();
 
   return (
     <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "background.default" }}>
@@ -182,8 +194,8 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
               <Typography sx={{ fontWeight: 700, fontSize: 18, letterSpacing: -0.3, color: "#F8FAFC" }}>
                 GiftCorp
               </Typography>
-              <Typography sx={{ fontSize: 11, color: "#94A3B8", fontWeight: 500 }}>
-                Corporate Gifting
+              <Typography sx={{ fontSize: 11, color: "#94A3B8", fontWeight: 600 }}>
+                {userRole.replace("_", " ")}
               </Typography>
             </Box>
           </Box>
@@ -282,7 +294,7 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
           <Toolbar sx={{ display: "flex", justifyContent: "space-between", py: 0.5 }}>
             <Box>
               <Typography sx={{ fontSize: 18, fontWeight: 700 }}>
-                {menus.flatMap(m => m.items).find(i => i.path === location.pathname)?.text || "Corporate Platform"}
+                {menus.flatMap(m => m.items).find(i => i.path === location.pathname)?.text || "Enterprise Platform"}
               </Typography>
             </Box>
 
@@ -328,7 +340,7 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
                     {userName}
                   </Typography>
                   <Typography sx={{ fontSize: 11, color: "text.secondary", textTransform: "capitalize" }}>
-                    {userRole}
+                    {userRole.replace("_", " ")}
                   </Typography>
                 </Box>
               </Box>
