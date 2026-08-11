@@ -20,3 +20,9 @@ class EmailService:
         logger.info(f"[EMAIL DISPATCH] To: {recipient_email} | Subject: {subject}")
         print(f"🎁 [Voucher Sent] Code: {code} -> {recipient_email}")
         return True
+
+    @staticmethod
+    def send_email_with_attachment(recipient_email: str, subject: str, body: str, attachment_path: str = None):
+        logger.info(f"[EMAIL DISPATCH] To: {recipient_email} | Subject: {subject} | Attachment: {attachment_path}")
+        print(f"📧 [Email Sent with Attachment] To: {recipient_email} | Subject: {subject} | Attachment: {attachment_path}")
+        return True
