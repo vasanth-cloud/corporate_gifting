@@ -25,23 +25,7 @@ def seed():
     db = SessionLocal()
 
     try:
-        # 1. Seed Dedicated Users for all Role Types
-        user_list = [
-            {"full_name": "Super Admin", "email": "admin@corporate.com", "phone": "+1-800-555-0199", "password_hash": hash_password("admin123"), "role": UserRole.SUPER_ADMIN},
-            {"full_name": "Google Company Admin", "email": "companyadmin@google.com", "phone": "+1-650-253-0000", "password_hash": hash_password("google123"), "role": UserRole.COMPANY_ADMIN},
-            {"full_name": "Acme HR Manager", "email": "hr@acmetech.com", "phone": "+1-555-0144", "password_hash": hash_password("hr123"), "role": UserRole.HR_MANAGER},
-            {"full_name": "Global Tech Vendor", "email": "vendor@globalsupplies.com", "phone": "+1-555-0199", "password_hash": hash_password("vendor123"), "role": UserRole.VENDOR},
-            {"full_name": "Sarah Jenkins (Employee)", "email": "sarah.jenkins@acmetech.com", "phone": "+1-555-0188", "password_hash": hash_password("emp123"), "role": UserRole.EMPLOYEE},
-        ]
-
-        for u in user_list:
-            existing_u = db.query(User).filter(User.email == u["email"]).first()
-            if not existing_u:
-                db.add(User(**u, is_active=True, is_verified=True))
-        db.commit()
-        print("Created User Accounts for All 5 Roles!")
-
-        # 2. Seed Multiple Companies
+        # 1. Seed Multiple Companies
         comp_data = [
             {"name": "Google LLC", "email": "gifting@google.com", "phone": "+1-650-253-0000", "website": "https://google.com", "address": "1600 Amphitheatre Pkwy, Mountain View, CA", "gst_number": "06AAACG1234F1Z1"},
             {"name": "Tesla Motors Inc", "email": "hr@tesla.com", "phone": "+1-650-681-5000", "website": "https://tesla.com", "address": "1 Tesla Road, Austin, TX", "gst_number": "07AAACT5678K1Z2"},
@@ -60,9 +44,27 @@ def seed():
             companies.append(comp)
         print(f"Seeded {len(companies)} Companies.")
 
-        # 3. Seed Multiple Employees under different companies
         c_google, c_tesla, c_infosys, c_acme = companies[0], companies[1], companies[2], companies[3]
 
+        # 2. Seed Dedicated Users for all Role Types linked to companies
+        user_list = [
+            {"full_name": "Super Admin", "email": "admin@corporate.com", "phone": "+1-800-555-0199", "password_hash": hash_password("admin123"), "role": UserRole.SUPER_ADMIN, "company_id": None},
+            {"full_name": "Google Company Admin", "email": "companyadmin@google.com", "phone": "+1-650-253-0000", "password_hash": hash_password("google123"), "role": UserRole.COMPANY_ADMIN, "company_id": c_google.id},
+            {"full_name": "Acme HR Manager", "email": "hr@acmetech.com", "phone": "+1-555-0144", "password_hash": hash_password("hr123"), "role": UserRole.HR_MANAGER, "company_id": c_acme.id},
+            {"full_name": "Global Tech Vendor", "email": "vendor@globalsupplies.com", "phone": "+1-555-0199", "password_hash": hash_password("vendor123"), "role": UserRole.VENDOR, "company_id": None},
+            {"full_name": "Sarah Jenkins (Employee)", "email": "sarah.jenkins@acmetech.com", "phone": "+1-555-0188", "password_hash": hash_password("emp123"), "role": UserRole.EMPLOYEE, "company_id": c_acme.id},
+        ]
+
+        for u in user_list:
+            existing_u = db.query(User).filter(User.email == u["email"]).first()
+            if not existing_u:
+                db.add(User(**u, is_active=True, is_verified=True))
+            else:
+                existing_u.company_id = u["company_id"]
+        db.commit()
+        print("Created/Updated User Accounts for All 5 Roles with company IDs!")
+
+        # 3. Seed Multiple Employees under different companies
         emp_data = [
             # Google Employees
             {"employee_code": "GOOG-001", "first_name": "Sundar", "last_name": "Pichai", "work_email": "sundar@google.com", "department": "Executive", "designation": "Chief Executive Officer", "joining_date": date(2015, 8, 10), "company_id": c_google.id},
