@@ -12,6 +12,8 @@ import {
   DialogActions,
   TextField,
   IconButton,
+  Grid,
+  Chip,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -20,6 +22,8 @@ import ApartmentOutlinedIcon from "@mui/icons-material/ApartmentOutlined";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
+import LanguageIcon from "@mui/icons-material/Language";
+import ReceiptIcon from "@mui/icons-material/Receipt";
 import { DataGrid } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
 import {
@@ -28,13 +32,13 @@ import {
   updateCompany,
   deleteCompany,
 } from "../../api/company";
+import { useAuth } from "../../context/AuthContext";
 
-// ---- Design tokens -----------------------------------
 const INK = "#1B1730";
 const INK_SOFT = "#6B6785";
 const SURFACE = "#FFFFFF";
 const PAGE_BG = "linear-gradient(180deg, #F6F5FB 0%, #ECEAF6 100%)";
-const PRIMARY = "#4C3A8C"; // royal violet
+const PRIMARY = "#4C3A8C";
 const GOLD = "#C9982F";
 const GREEN = "#2F8F5B";
 const CORAL = "#E1604A";
@@ -45,19 +49,6 @@ const AVATAR_COLORS = [PRIMARY, GOLD, GREEN, CORAL, BLUE];
 const FONT_DISPLAY = "'Sora', sans-serif";
 const FONT_BODY = "'Inter', sans-serif";
 
-function usePageFonts() {
-  useEffect(() => {
-    const id = "app-fonts";
-    if (document.getElementById(id)) return;
-    const link = document.createElement("link");
-    link.id = id;
-    link.rel = "stylesheet";
-    link.href =
-      "https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&family=Inter:wght@400;500;600&display=swap";
-    document.head.appendChild(link);
-  }, []);
-}
-
 function initialsAvatarColor(name: string) {
   if (!name) return PRIMARY;
   const code = name.charCodeAt(0) || 0;
@@ -65,7 +56,8 @@ function initialsAvatarColor(name: string) {
 }
 
 export default function Companies() {
-  usePageFonts();
+  const { user } = useAuth();
+  const isSuperAdmin = user?.role === "SUPER_ADMIN";
 
   const [rows, setRows] = useState<any[]>([]);
   const [editing, setEditing] = useState(false);
@@ -135,13 +127,13 @@ export default function Companies() {
     setSelectedId(company.id);
 
     setForm({
-      name: company.name,
-      email: company.email,
-      phone: company.phone,
-      website: company.website,
-      address: company.address,
-      logo: company.logo,
-      gst_number: company.gst_number,
+      name: company.name || "",
+      email: company.email || "",
+      phone: company.phone || "",
+      website: company.website || "",
+      address: company.address || "",
+      logo: company.logo || "",
+      gst_number: company.gst_number || "",
     });
 
     setOpen(true);
@@ -154,11 +146,7 @@ export default function Companies() {
   };
 
   const columns: GridColDef[] = [
-    {
-      field: "id",
-      headerName: "ID",
-      width: 80,
-    },
+    { field: "id", headerName: "ID", width: 80 },
     {
       field: "name",
       headerName: "Company",
@@ -226,53 +214,58 @@ export default function Companies() {
     {
       field: "actions",
       headerName: "Actions",
-      width: 150,
+      width: 120,
       sortable: false,
       renderCell: (params) => (
         <>
           <IconButton color="primary" onClick={() => handleEdit(params.row)}>
             <EditIcon fontSize="small" />
           </IconButton>
-
-          <IconButton color="error" onClick={() => handleDelete(params.row.id)}>
-            <DeleteIcon fontSize="small" />
-          </IconButton>
+          {isSuperAdmin && (
+            <IconButton color="error" onClick={() => handleDelete(params.row.id)}>
+              <DeleteIcon fontSize="small" />
+            </IconButton>
+          )}
         </>
       ),
     },
   ];
 
-  return (
-    <Box sx={{ minHeight: "100vh", background: PAGE_BG }}>
-      <Box sx={{ p: 4 }}>
-        <Box
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "flex-start",
-            mb: 3,
-          }}
-        >
-          <Box>
-            <Stack spacing={1.5} sx={{ flexDirection: "row", alignItems: "center", mb: 0.5 }}>
-              <ApartmentOutlinedIcon sx={{ color: PRIMARY, fontSize: 26 }} />
-              <Typography
-                sx={{
-                  fontFamily: FONT_DISPLAY,
-                  fontWeight: 800,
-                  fontSize: 28,
-                  color: INK,
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                Companies
-              </Typography>
-            </Stack>
-            <Typography sx={{ fontFamily: FONT_BODY, fontSize: 14, color: INK_SOFT }}>
-              Every organization ordering gifts for their team, in one place
-            </Typography>
-          </Box>
+  const ownCompany = rows.length > 0 ? rows[0] : null;
 
+  return (
+    <Box sx={{ minHeight: "100vh", background: PAGE_BG, p: { xs: 2, sm: 4 } }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          mb: 3,
+        }}
+      >
+        <Box>
+          <Stack spacing={1.5} sx={{ flexDirection: "row", alignItems: "center", mb: 0.5 }}>
+            <ApartmentOutlinedIcon sx={{ color: PRIMARY, fontSize: 28 }} />
+            <Typography
+              sx={{
+                fontFamily: FONT_DISPLAY,
+                fontWeight: 800,
+                fontSize: 28,
+                color: INK,
+                letterSpacing: "-0.02em",
+              }}
+            >
+              {isSuperAdmin ? "Companies Management" : "Company Profile"}
+            </Typography>
+          </Stack>
+          <Typography sx={{ fontFamily: FONT_BODY, fontSize: 14, color: INK_SOFT }}>
+            {isSuperAdmin
+              ? "Platform-wide company registry and account controls"
+              : "Your organization's official profile, address, and contact details"}
+          </Typography>
+        </Box>
+
+        {isSuperAdmin && (
           <Button
             variant="contained"
             startIcon={<AddIcon />}
@@ -301,14 +294,16 @@ export default function Companies() {
               boxShadow: "0 4px 14px rgba(76, 58, 140, 0.28)",
               "&:hover": {
                 backgroundColor: "#3E2F70",
-                boxShadow: "0 6px 18px rgba(76, 58, 140, 0.34)",
               },
             }}
           >
             Add Company
           </Button>
-        </Box>
+        )}
+      </Box>
 
+      {/* Multi-Tenant Display Scoping */}
+      {isSuperAdmin ? (
         <Paper
           elevation={0}
           sx={{
@@ -341,121 +336,133 @@ export default function Companies() {
               "& .MuiDataGrid-cell": {
                 borderBottom: "1px solid #F1EFF8",
               },
-              "& .MuiDataGrid-row:hover": {
-                backgroundColor: "#FAF9FD",
-              },
-              "& .MuiDataGrid-footerContainer": {
-                borderTop: "1px solid #E7E4F2",
-                backgroundColor: "#FAF9FD",
-              },
-              "& .MuiDataGrid-cell:focus, & .MuiDataGrid-cell:focus-within": {
-                outline: "none",
-              },
-              "& .MuiDataGrid-columnHeader:focus, & .MuiDataGrid-columnHeader:focus-within": {
-                outline: "none",
-              },
             }}
           />
         </Paper>
-
-        <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
-          <DialogTitle sx={{ fontFamily: FONT_DISPLAY, fontWeight: 700, color: INK }}>
-            {editing ? "Edit Company" : "Add Company"}
-          </DialogTitle>
-
-          <DialogContent
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              gap: 2,
-              mt: 1,
-            }}
-          >
-            <TextField
-              label="Company Name"
-              name="name"
-              value={form.name}
-              onChange={handleChange}
-              fullWidth
-            />
-
-            <TextField
-              label="Email"
-              name="email"
-              value={form.email}
-              onChange={handleChange}
-              fullWidth
-            />
-
-            <TextField
-              label="Phone"
-              name="phone"
-              value={form.phone}
-              onChange={handleChange}
-              fullWidth
-            />
-
-            <TextField
-              label="Website"
-              name="website"
-              value={form.website}
-              onChange={handleChange}
-              fullWidth
-            />
-
-            <TextField
-              label="Address"
-              name="address"
-              value={form.address}
-              onChange={handleChange}
-              fullWidth
-            />
-
-            <TextField
-              label="Logo URL"
-              name="logo"
-              value={form.logo}
-              onChange={handleChange}
-              fullWidth
-            />
-
-            <TextField
-              label="GST Number"
-              name="gst_number"
-              value={form.gst_number}
-              onChange={handleChange}
-              fullWidth
-            />
-          </DialogContent>
-
-          <DialogActions sx={{ px: 3, pb: 2 }}>
-            <Button
-              onClick={() => {
-                setOpen(false);
-                setEditing(false);
-                setSelectedId(null);
-              }}
-              sx={{ textTransform: "none", fontFamily: FONT_BODY }}
-            >
-              Cancel
-            </Button>
+      ) : ownCompany ? (
+        <Paper
+          elevation={0}
+          sx={{
+            p: 4,
+            borderRadius: "20px",
+            border: "1px solid #E7E4F2",
+            boxShadow: "0 4px 20px rgba(27, 23, 48, 0.06)",
+            background: SURFACE,
+          }}
+        >
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+              <Avatar
+                sx={{
+                  width: 64,
+                  height: 64,
+                  fontSize: 26,
+                  fontWeight: 800,
+                  bgcolor: PRIMARY,
+                  boxShadow: "0 6px 16px rgba(76, 58, 140, 0.3)",
+                }}
+              >
+                {ownCompany.name.charAt(0).toUpperCase()}
+              </Avatar>
+              <Box>
+                <Typography variant="h5" sx={{ fontWeight: 800, color: INK }}>
+                  {ownCompany.name}
+                </Typography>
+                <Chip label="Active Company Account" color="success" size="small" sx={{ mt: 0.5, fontWeight: 600 }} />
+              </Box>
+            </Box>
 
             <Button
-              variant="contained"
-              onClick={handleSubmit}
-              sx={{
-                backgroundColor: PRIMARY,
-                textTransform: "none",
-                fontFamily: FONT_BODY,
-                fontWeight: 600,
-                "&:hover": { backgroundColor: "#3E2F70" },
-              }}
+              variant="outlined"
+              startIcon={<EditIcon />}
+              onClick={() => handleEdit(ownCompany)}
+              sx={{ borderRadius: "10px", textTransform: "none", fontWeight: 600 }}
             >
-              {editing ? "Update" : "Save"}
+              Edit Company Profile
             </Button>
-          </DialogActions>
-        </Dialog>
-      </Box>
+          </Box>
+
+          <Grid container spacing={3} sx={{ mt: 1 }}>
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                <EmailOutlinedIcon sx={{ color: PRIMARY }} />
+                <Box>
+                  <Typography variant="caption" sx={{ color: INK_SOFT, display: "block" }}>Corporate Email</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600, color: INK }}>{ownCompany.email}</Typography>
+                </Box>
+              </Box>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                <PhoneOutlinedIcon sx={{ color: PRIMARY }} />
+                <Box>
+                  <Typography variant="caption" sx={{ color: INK_SOFT, display: "block" }}>Contact Phone</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600, color: INK }}>{ownCompany.phone}</Typography>
+                </Box>
+              </Box>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                <LanguageIcon sx={{ color: PRIMARY }} />
+                <Box>
+                  <Typography variant="caption" sx={{ color: INK_SOFT, display: "block" }}>Official Website</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600, color: INK }}>{ownCompany.website || "N/A"}</Typography>
+                </Box>
+              </Box>
+            </Grid>
+
+            <Grid size={{ xs: 12, sm: 6 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
+                <ReceiptIcon sx={{ color: PRIMARY }} />
+                <Box>
+                  <Typography variant="caption" sx={{ color: INK_SOFT, display: "block" }}>GST Number</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600, color: INK }}>{ownCompany.gst_number || "N/A"}</Typography>
+                </Box>
+              </Box>
+            </Grid>
+
+            <Grid size={{ xs: 12 }}>
+              <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, mt: 1 }}>
+                <PlaceOutlinedIcon sx={{ color: PRIMARY, mt: 0.5 }} />
+                <Box>
+                  <Typography variant="caption" sx={{ color: INK_SOFT, display: "block" }}>Headquarters Address</Typography>
+                  <Typography variant="body1" sx={{ fontWeight: 600, color: INK }}>{ownCompany.address}</Typography>
+                </Box>
+              </Box>
+            </Grid>
+          </Grid>
+        </Paper>
+      ) : (
+        <Paper sx={{ p: 4, textAlign: "center", borderRadius: 4 }}>
+          <Typography color="text.secondary">No company profile found.</Typography>
+        </Paper>
+      )}
+
+      {/* Edit / Add Modal */}
+      <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
+        <DialogTitle sx={{ fontFamily: FONT_DISPLAY, fontWeight: 700, color: INK }}>
+          {editing ? "Edit Company Profile" : "Add New Company"}
+        </DialogTitle>
+
+        <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
+          <TextField label="Company Name" name="name" value={form.name} onChange={handleChange} fullWidth />
+          <TextField label="Email" name="email" value={form.email} onChange={handleChange} fullWidth />
+          <TextField label="Phone" name="phone" value={form.phone} onChange={handleChange} fullWidth />
+          <TextField label="Website" name="website" value={form.website} onChange={handleChange} fullWidth />
+          <TextField label="Address" name="address" value={form.address} onChange={handleChange} fullWidth />
+          <TextField label="Logo URL" name="logo" value={form.logo} onChange={handleChange} fullWidth />
+          <TextField label="GST Number" name="gst_number" value={form.gst_number} onChange={handleChange} fullWidth />
+        </DialogContent>
+
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setOpen(false)} sx={{ textTransform: "none" }}>Cancel</Button>
+          <Button variant="contained" onClick={handleSubmit} sx={{ backgroundColor: PRIMARY, textTransform: "none", fontWeight: 600 }}>
+            {editing ? "Update Profile" : "Save Company"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
