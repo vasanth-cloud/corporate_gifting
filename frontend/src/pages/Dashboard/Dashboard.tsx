@@ -30,6 +30,7 @@ import {
   Briefcase,
   Ticket,
   UserCheck,
+  Megaphone,
 } from "lucide-react";
 import {
   getDashboardSummary,
@@ -330,7 +331,8 @@ export default function Dashboard() {
     0
   );
 
-  const isCompanyAdminOrHr = summary.is_company_scoped || user?.role === "COMPANY_ADMIN" || user?.role === "HR_MANAGER";
+  const isHrManager = user?.role === "HR_MANAGER";
+  const isCompanyAdminOrHr = summary.is_company_scoped || user?.role === "COMPANY_ADMIN" || isHrManager;
 
   if (loading) {
     return (
@@ -367,7 +369,7 @@ export default function Dashboard() {
               : "Global Platform Dashboard"}
           </Typography>
           {isCompanyAdminOrHr && (
-            <Chip label="Company Scoped" color="primary" size="small" sx={{ fontWeight: 700 }} />
+            <Chip label={isHrManager ? "HR Manager View" : "Company Admin View"} color="primary" size="small" sx={{ fontWeight: 700 }} />
           )}
         </Stack>
         <Typography
@@ -378,14 +380,25 @@ export default function Dashboard() {
             mb: 4,
           }}
         >
-          {isCompanyAdminOrHr
+          {isHrManager
+            ? `A snapshot of active campaigns, employees, orders, and gifting spend for ${summary.company_name || "your organization"}`
+            : isCompanyAdminOrHr
             ? `A snapshot of HR managers, employees, orders, and gifting spend for ${summary.company_name || "your organization"}`
             : "A snapshot of orders, revenue, and gifting activity across all companies"}
         </Typography>
 
         <Grid container spacing={3}>
           {/* Summary Cards */}
-          {isCompanyAdminOrHr ? (
+          {isHrManager ? (
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <KpiCard
+                icon={<Megaphone size={20} />}
+                label="Active Campaigns"
+                value={summary.total_campaigns ?? 0}
+                accent={PRIMARY}
+              />
+            </Grid>
+          ) : isCompanyAdminOrHr ? (
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <KpiCard
                 icon={<UserCheck size={20} />}

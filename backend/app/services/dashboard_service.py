@@ -6,6 +6,7 @@ from app.models.company import Company
 from app.models.employee import Employee
 from app.models.user import User, UserRole
 from app.models.order import Order
+from app.models.campaign import Campaign
 
 
 class DashboardService:
@@ -28,6 +29,11 @@ class DashboardService:
                 Employee.is_deleted == False
             ).scalar() or 0
 
+            total_campaigns = db.query(func.count(Campaign.id)).filter(
+                Campaign.company_id == comp_id,
+                Campaign.is_deleted == False
+            ).scalar() or 0
+
             total_orders = db.query(func.count(Order.id)).filter(
                 Order.company_id == comp_id,
                 Order.is_deleted == False
@@ -43,6 +49,7 @@ class DashboardService:
                 "company_name": company_name,
                 "total_hrs": total_hrs,
                 "total_employees": total_employees,
+                "total_campaigns": total_campaigns,
                 "total_orders": total_orders,
                 "total_revenue": total_revenue,
             }
