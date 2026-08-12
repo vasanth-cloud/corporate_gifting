@@ -69,7 +69,7 @@ export default function Approvals() {
   };
 
   const columns: GridColDef[] = [
-    { field: "id", headerName: "ID", width: 70 },
+    { field: "sno", headerName: "S.No", width: 80, renderCell: (params) => params.api.getRowIndexRelativeToVisibleRows(params.row.id) + 1 },
     { field: "title", headerName: "Campaign Title", flex: 1.4 },
     { field: "budget", headerName: "Requested Budget", width: 150, valueFormatter: (value) => `$${Number(value).toLocaleString()}` },
     { field: "start_date", headerName: "Start Date", width: 130 },
