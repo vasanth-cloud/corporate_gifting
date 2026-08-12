@@ -74,7 +74,7 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
   const userInitial = user?.full_name ? user.full_name.charAt(0).toUpperCase() : "A";
   const userName = user?.full_name || "Platform User";
 
-  // Exact PRD 5-Panel Tree Structure
+  // Exact PRD 5-Panel Role Responsibility Tree Structure
   const getMenusByRole = () => {
     switch (userRole) {
       case "SUPER_ADMIN":
@@ -107,7 +107,6 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
               { text: "Dashboard", icon: <DashboardIcon />, path: "/company/dashboard" },
               { text: "Company Profile", icon: <BusinessIcon />, path: "/companies" },
               { text: "HR Managers", icon: <PeopleIcon />, path: "/company/hr-managers" },
-              { text: "Employees", icon: <PeopleIcon />, path: "/company/employees" },
               { text: "Gift Catalog", icon: <InventoryIcon />, path: "/gifts" },
               { text: "Campaigns", icon: <CampaignIcon />, path: "/company/campaigns" },
               { text: "Recipients", icon: <ChecklistIcon />, path: "/company/recipients" },
@@ -126,7 +125,7 @@ export default function MainLayout({ children }: { children?: React.ReactNode })
             section: "HR MANAGER PANEL",
             items: [
               { text: "Dashboard", icon: <DashboardIcon />, path: "/hr/dashboard" },
-              { text: "Employees", icon: <PeopleIcon />, path: "/hr/employees" },
+              { text: "Employees Directory", icon: <PeopleIcon />, path: "/hr/employees" },
               { text: "Campaigns", icon: <CampaignIcon />, path: "/hr/campaigns" },
               { text: "Recipients", icon: <ChecklistIcon />, path: "/hr/recipients" },
               { text: "Addresses", icon: <HomeIcon />, path: "/hr/addresses" },
