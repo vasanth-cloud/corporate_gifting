@@ -32,8 +32,10 @@ import BusinessIcon from "@mui/icons-material/Business";
 import { getCampaigns, createCampaign, updateCampaign, deleteCampaign } from "../../api/campaign";
 import type { Campaign } from "../../api/campaign";
 import { getCompanies } from "../../api/company";
+import { useAuth } from "../../context/AuthContext";
 
 export default function Campaigns() {
+  const { user } = useAuth();
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [companies, setCompanies] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,6 +48,9 @@ export default function Campaigns() {
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [saving, setSaving] = useState(false);
 
+  const userRole = user?.role || "SUPER_ADMIN";
+  const userCompanyId = user?.company_id ? String(user.company_id) : "1";
+
   const [formValues, setFormValues] = useState({
     title: "",
     description: "",
@@ -53,7 +58,7 @@ export default function Campaigns() {
     start_date: new Date().toISOString().split("T")[0],
     end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
     status: "DRAFT" as "DRAFT" | "ACTIVE" | "COMPLETED" | "CANCELLED",
-    company_id: "",
+    company_id: userCompanyId,
   });
 
   const loadData = async () => {
@@ -64,8 +69,17 @@ export default function Campaigns() {
         getCampaigns().catch(() => []),
         getCompanies().catch(() => []),
       ]);
-      setCampaigns(Array.isArray(campRes) ? campRes : []);
-      setCompanies(Array.isArray(compRes) ? compRes : []);
+
+      const compList = Array.isArray(compRes) ? compRes : [];
+      setCompanies(compList);
+
+      let allCamps = Array.isArray(campRes) ? campRes : [];
+      if (userRole === "HR_MANAGER" || userRole === "COMPANY_ADMIN") {
+        if (user?.company_id) {
+          allCamps = allCamps.filter((c) => c.company_id === user.company_id);
+        }
+      }
+      setCampaigns(allCamps);
     } catch (err: any) {
       console.error(err);
       setError("Failed to fetch campaigns.");
@@ -77,6 +91,8 @@ export default function Campaigns() {
   useEffect(() => {
     loadData();
   }, []);
+
+  const userCompanyName = companies.find((c) => String(c.id) === userCompanyId)?.name || "My Company";
 
   const handleOpenModal = (camp?: Campaign) => {
     if (camp) {
@@ -99,7 +115,7 @@ export default function Campaigns() {
         start_date: new Date().toISOString().split("T")[0],
         end_date: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
         status: "DRAFT",
-        company_id: companies.length > 0 ? String(companies[0].id) : "1",
+        company_id: userRole === "SUPER_ADMIN" ? (companies.length > 0 ? String(companies[0].id) : "1") : userCompanyId,
       });
     }
     setDialogOpen(true);
@@ -239,7 +255,7 @@ export default function Campaigns() {
           sx={{ width: { xs: "100%", sm: 180 } }}
         >
           <MenuItem value="ALL">All Statuses</MenuItem>
-          <MenuItem value="DRAFT">Draft</MenuItem>
+          <MenuItem value="DRAFT">Draft / Pending Approval</MenuItem>
           <MenuItem value="ACTIVE">Active</MenuItem>
           <MenuItem value="COMPLETED">Completed</MenuItem>
           <MenuItem value="CANCELLED">Cancelled</MenuItem>
@@ -259,7 +275,7 @@ export default function Campaigns() {
             No gifting campaigns found
           </Typography>
           <Typography variant="body2" sx={{ color: "#94A3B8" }}>
-            Click "Create Campaign" to launch a new corporate gifting program.
+            Click "Create Campaign" to submit a new gifting drive to Company Admin for approval.
           </Typography>
         </Paper>
       ) : (
@@ -283,7 +299,7 @@ export default function Campaigns() {
                   <CardContent sx={{ p: 3 }}>
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
                       <Chip
-                        label={camp.status}
+                        label={camp.status === "DRAFT" ? "PENDING APPROVAL" : camp.status}
                         size="small"
                         color={getStatusColor(camp.status) as any}
                         sx={{ fontWeight: 700, fontSize: 11 }}
@@ -309,7 +325,7 @@ export default function Campaigns() {
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
                       <BusinessIcon fontSize="small" sx={{ color: "#94A3B8" }} />
                       <Typography sx={{ fontSize: 13, color: "#475569", fontWeight: 500 }}>
-                        {comp ? comp.name : `Company #${camp.company_id}`}
+                        {comp ? comp.name : userCompanyName}
                       </Typography>
                     </Box>
 
@@ -323,7 +339,7 @@ export default function Campaigns() {
                     <Box sx={{ borderTop: "1px solid #F1F5F9", pt: 2, mt: 1 }}>
                       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                         <Typography sx={{ fontSize: 12, color: "#64748B", fontWeight: 600 }}>
-                          Budget Allocated
+                          Budget Requested
                         </Typography>
                         <Typography variant="subtitle1" sx={{ fontWeight: 800, color: "#6366F1" }}>
                           ${Number(camp.budget).toLocaleString()}
@@ -347,7 +363,7 @@ export default function Campaigns() {
       <Dialog open={dialogOpen} onClose={handleCloseModal} maxWidth="sm" fullWidth>
         <form onSubmit={handleSave}>
           <DialogTitle sx={{ fontWeight: 700 }}>
-            {editingCampaign ? "Edit Campaign" : "Create Gifting Campaign"}
+            {editingCampaign ? "Edit Campaign Request" : "Create & Submit Gifting Campaign"}
           </DialogTitle>
           <DialogContent dividers>
             <Grid container spacing={2}>
@@ -360,45 +376,71 @@ export default function Campaigns() {
                   onChange={(e) => setFormValues({ ...formValues, title: e.target.value })}
                 />
               </Grid>
+
+              {/* Company Field: Auto-locked for HR Manager / Company Admin; Select dropdown only for Super Admin */}
               <Grid size={12}>
-                <TextField
-                  select
-                  fullWidth
-                  label="Target Company"
-                  value={formValues.company_id}
-                  onChange={(e) => setFormValues({ ...formValues, company_id: e.target.value })}
-                >
-                  {companies.map((c) => (
-                    <MenuItem key={c.id} value={String(c.id)}>
-                      {c.name}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                {userRole === "SUPER_ADMIN" ? (
+                  <TextField
+                    select
+                    fullWidth
+                    label="Target Company"
+                    value={formValues.company_id}
+                    onChange={(e) => setFormValues({ ...formValues, company_id: e.target.value })}
+                  >
+                    {companies.map((c) => (
+                      <MenuItem key={c.id} value={String(c.id)}>
+                        {c.name}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                ) : (
+                  <TextField
+                    fullWidth
+                    disabled
+                    label="Company"
+                    value={userCompanyName}
+                    helperText="Automatically locked to your logged-in organization"
+                  />
+                )}
               </Grid>
-              <Grid size={6}>
+
+              <Grid size={userRole === "HR_MANAGER" ? 12 : 6}>
                 <TextField
                   fullWidth
-                  label="Budget ($)"
+                  label="Requested Budget ($)"
                   type="number"
                   required
                   value={formValues.budget}
                   onChange={(e) => setFormValues({ ...formValues, budget: e.target.value })}
                 />
               </Grid>
-              <Grid size={6}>
-                <TextField
-                  select
-                  fullWidth
-                  label="Status"
-                  value={formValues.status}
-                  onChange={(e) => setFormValues({ ...formValues, status: e.target.value as any })}
-                >
-                  <MenuItem value="DRAFT">Draft</MenuItem>
-                  <MenuItem value="ACTIVE">Active</MenuItem>
-                  <MenuItem value="COMPLETED">Completed</MenuItem>
-                  <MenuItem value="CANCELLED">Cancelled</MenuItem>
-                </TextField>
-              </Grid>
+
+              {/* Status Field: Hidden for HR Manager (automatically set to Pending Approval) */}
+              {userRole !== "HR_MANAGER" && (
+                <Grid size={6}>
+                  <TextField
+                    select
+                    fullWidth
+                    label="Status"
+                    value={formValues.status}
+                    onChange={(e) => setFormValues({ ...formValues, status: e.target.value as any })}
+                  >
+                    <MenuItem value="DRAFT">Draft / Pending Approval</MenuItem>
+                    <MenuItem value="ACTIVE">Active</MenuItem>
+                    <MenuItem value="COMPLETED">Completed</MenuItem>
+                    <MenuItem value="CANCELLED">Cancelled</MenuItem>
+                  </TextField>
+                </Grid>
+              )}
+
+              {userRole === "HR_MANAGER" && (
+                <Grid size={12}>
+                  <Alert severity="info">
+                    This campaign request will automatically be submitted to your <strong>Company Admin</strong> for budget approval.
+                  </Alert>
+                </Grid>
+              )}
+
               <Grid size={6}>
                 <TextField
                   fullWidth
@@ -409,6 +451,7 @@ export default function Campaigns() {
                   onChange={(e) => setFormValues({ ...formValues, start_date: e.target.value })}
                 />
               </Grid>
+
               <Grid size={6}>
                 <TextField
                   fullWidth
@@ -419,6 +462,7 @@ export default function Campaigns() {
                   onChange={(e) => setFormValues({ ...formValues, end_date: e.target.value })}
                 />
               </Grid>
+
               <Grid size={12}>
                 <TextField
                   fullWidth
@@ -431,12 +475,13 @@ export default function Campaigns() {
               </Grid>
             </Grid>
           </DialogContent>
+
           <DialogActions sx={{ p: 2.5 }}>
             <Button onClick={handleCloseModal} disabled={saving}>
               Cancel
             </Button>
             <Button variant="contained" type="submit" disabled={saving} sx={{ bgcolor: "#6366F1" }}>
-              {saving ? <CircularProgress size={24} color="inherit" /> : editingCampaign ? "Update Campaign" : "Save Campaign"}
+              {saving ? <CircularProgress size={24} color="inherit" /> : editingCampaign ? "Update Request" : "Submit for Approval"}
             </Button>
           </DialogActions>
         </form>
