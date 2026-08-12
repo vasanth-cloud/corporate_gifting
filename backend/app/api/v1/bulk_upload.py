@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_user
 from app.core.database import get_db
 from app.core.permissions import require_roles
+from app.core.security import hash_password
 from app.models.user import User, UserRole
 from app.models.employee import Employee
 
@@ -78,6 +79,21 @@ async def bulk_upload_employees(
                 company_id=company_id,
             )
             db.add(employee)
+
+            # Auto-provision login account for Employee
+            user_account = db.query(User).filter(User.email == work_email).first()
+            if not user_account:
+                emp_user = User(
+                    full_name=f"{first_name} {last_name}".strip(),
+                    email=work_email,
+                    password_hash=hash_password("emp123"),
+                    role=UserRole.EMPLOYEE,
+                    company_id=company_id,
+                    is_active=True,
+                    is_verified=True,
+                )
+                db.add(emp_user)
+
             created_count += 1
         except Exception as e:
             errors.append(f"Row {idx}: {str(e)}")

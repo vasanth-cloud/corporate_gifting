@@ -2,6 +2,8 @@ from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
 from app.models.employee import Employee
+from app.models.user import User, UserRole
+from app.core.security import hash_password
 from app.repositories.employee_repository import EmployeeRepository
 from app.schemas.employee import EmployeeCreate, EmployeeUpdate
 
@@ -23,11 +25,27 @@ class EmployeeService:
             )
 
         employee = Employee(**request.model_dump())
-
-        return EmployeeRepository.create(
+        created_emp = EmployeeRepository.create(
             db,
             employee,
         )
+
+        # Auto-provision user account for single employee creation
+        user_account = db.query(User).filter(User.email == request.work_email).first()
+        if not user_account:
+            emp_user = User(
+                full_name=f"{request.first_name} {request.last_name}".strip(),
+                email=request.work_email,
+                password_hash=hash_password("emp123"),
+                role=UserRole.EMPLOYEE,
+                company_id=request.company_id,
+                is_active=True,
+                is_verified=True,
+            )
+            db.add(emp_user)
+            db.commit()
+
+        return created_emp
 
     @staticmethod
     def get_all(
