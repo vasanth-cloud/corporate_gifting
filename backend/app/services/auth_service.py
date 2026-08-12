@@ -6,7 +6,8 @@ from app.core.security import (
     verify_password,
     create_access_token,
 )
-from app.models.user import User
+from app.models.user import User, UserRole
+from app.models.employee import Employee
 from app.repositories.user_repository import UserRepository
 from app.schemas.auth import RegisterRequest
 
@@ -51,6 +52,23 @@ class AuthService:
             db,
             email,
         )
+
+        # On-the-fly provisioning for existing employees imported before user creation logic was added
+        if not user:
+            emp = db.query(Employee).filter(Employee.work_email == email).first()
+            if emp:
+                user = User(
+                    full_name=f"{emp.first_name} {emp.last_name}".strip(),
+                    email=emp.work_email,
+                    password_hash=hash_password("emp123"),
+                    role=UserRole.EMPLOYEE,
+                    company_id=emp.company_id,
+                    is_active=True,
+                    is_verified=True,
+                )
+                db.add(user)
+                db.commit()
+                db.refresh(user)
 
         if not user:
             raise HTTPException(
