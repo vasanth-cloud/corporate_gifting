@@ -28,18 +28,44 @@ class UserCreateRequest(BaseModel):
 @router.get("", response_model=list[UserResponse])
 def get_users(
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(UserRole.SUPER_ADMIN)),
+    current_user: User = Depends(get_current_user),
 ):
-    users = db.query(User).filter(User.is_deleted == False).all()
-    return users
+    if current_user.role == UserRole.SUPER_ADMIN:
+        return db.query(User).filter(User.is_deleted == False).all()
+    
+    if current_user.role == UserRole.COMPANY_ADMIN:
+        if current_user.company_id is None:
+            return []
+        return db.query(User).filter(
+            User.company_id == current_user.company_id,
+            User.is_deleted == False
+        ).all()
+        
+    return [current_user]
 
 
 @router.post("", response_model=UserResponse, status_code=201)
 def create_user(
     request: UserCreateRequest,
     db: Session = Depends(get_db),
-    current_user: User = Depends(require_roles(UserRole.SUPER_ADMIN)),
+    current_user: User = Depends(get_current_user),
 ):
+    if current_user.role not in [UserRole.SUPER_ADMIN, UserRole.COMPANY_ADMIN]:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to create user accounts.",
+        )
+
+    # Company Admin can only create HR_MANAGER accounts for their own company
+    assigned_company_id = request.company_id
+    if current_user.role == UserRole.COMPANY_ADMIN:
+        if request.role != UserRole.HR_MANAGER:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Company Admins can only create HR Manager accounts.",
+            )
+        assigned_company_id = current_user.company_id
+
     existing = db.query(User).filter(User.email == request.email).first()
     if existing:
         raise HTTPException(
@@ -53,7 +79,7 @@ def create_user(
         password_hash=hash_password(request.password),
         role=request.role,
         phone=request.phone,
-        company_id=request.company_id,
+        company_id=assigned_company_id,
         is_active=True,
         is_verified=True,
     )
