@@ -1,5 +1,6 @@
 import csv
 import io
+from datetime import date, datetime
 from fastapi import APIRouter, Depends, UploadFile, File, HTTPException
 from sqlalchemy.orm import Session
 
@@ -43,9 +44,17 @@ async def bulk_upload_employees(
             first_name = row.get("first_name", "").strip()
             last_name = row.get("last_name", "").strip()
             work_email = row.get("work_email", "").strip()
-            department = row.get("department", "").strip()
-            designation = row.get("designation", "").strip()
+            department = row.get("department", "").strip() or "General"
+            designation = row.get("designation", "").strip() or "Staff"
             
+            raw_joining_date = row.get("joining_date", "").strip()
+            parsed_joining_date = date.today()
+            if raw_joining_date:
+                try:
+                    parsed_joining_date = datetime.strptime(raw_joining_date, "%Y-%m-%d").date()
+                except ValueError:
+                    parsed_joining_date = date.today()
+
             raw_comp_id = row.get("company_id")
             company_id = int(raw_comp_id) if raw_comp_id else (current_user.company_id or 1)
 
@@ -65,6 +74,7 @@ async def bulk_upload_employees(
                 work_email=work_email,
                 department=department,
                 designation=designation,
+                joining_date=parsed_joining_date,
                 company_id=company_id,
             )
             db.add(employee)
