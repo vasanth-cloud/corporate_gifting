@@ -1,0 +1,6 @@
+employee_code,first_name,last_name,work_email,department,designation
+EMP-101,John,Doe,john.doe@acmetech.com,Engineering,Senior Software Engineer
+EMP-102,Sarah,Jenkins,sarah.jenkins@acmetech.com,Marketing,Brand Specialist
+EMP-103,Michael,Scott,michael.scott@acmetech.com,Sales,Regional Sales Director
+EMP-104,Pam,Beesly,pam.beesly@acmetech.com,Operations,Office Administrator
+EMP-105,Jim,Halpert,jim.halpert@acmetech.com,Sales,Account Executive

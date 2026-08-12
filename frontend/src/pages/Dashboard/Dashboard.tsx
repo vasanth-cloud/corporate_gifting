@@ -7,6 +7,7 @@ import {
   Box,
   CircularProgress,
   Stack,
+  Chip,
 } from "@mui/material";
 import {
   ResponsiveContainer,
@@ -28,6 +29,7 @@ import {
   Gift,
   Briefcase,
   Ticket,
+  UserCheck,
 } from "lucide-react";
 import {
   getDashboardSummary,
@@ -37,17 +39,17 @@ import {
   getTopCompanies,
   getOrderStatus,
 } from "../../api/dashboard";
+import { useAuth } from "../../context/AuthContext";
 
-// ---- Design tokens -------------------------------------------------------
 const INK = "#1B1730";
 const INK_SOFT = "#6B6785";
 const SURFACE = "#FFFFFF";
 const PAGE_BG = "linear-gradient(180deg, #F6F5FB 0%, #ECEAF6 100%)";
-const PRIMARY = "#4C3A8C"; // royal violet
-const GOLD = "#C9982F"; // ribbon gold
-const GREEN = "#2F8F5B"; // revenue green
-const CORAL = "#E1604A"; // status accent
-const BLUE = "#3E7CB1"; // secondary data
+const PRIMARY = "#4C3A8C";
+const GOLD = "#C9982F";
+const GREEN = "#2F8F5B";
+const CORAL = "#E1604A";
+const BLUE = "#3E7CB1";
 
 const PIE_COLORS = [PRIMARY, GOLD, GREEN, CORAL, BLUE];
 
@@ -285,6 +287,7 @@ function RankedList({
 
 export default function Dashboard() {
   useDashboardFonts();
+  const { user } = useAuth();
 
   const [summary, setSummary] = useState<any>({});
   const [monthlyOrders, setMonthlyOrders] = useState<any[]>([]);
@@ -327,6 +330,8 @@ export default function Dashboard() {
     0
   );
 
+  const isCompanyAdminOrHr = summary.is_company_scoped || user?.role === "COMPANY_ADMIN" || user?.role === "HR_MANAGER";
+
   if (loading) {
     return (
       <Box
@@ -357,8 +362,13 @@ export default function Dashboard() {
               letterSpacing: "-0.02em",
             }}
           >
-            Dashboard
+            {isCompanyAdminOrHr
+              ? `${summary.company_name || user?.full_name || "Company"} Dashboard`
+              : "Global Platform Dashboard"}
           </Typography>
+          {isCompanyAdminOrHr && (
+            <Chip label="Company Scoped" color="primary" size="small" sx={{ fontWeight: 700 }} />
+          )}
         </Stack>
         <Typography
           sx={{
@@ -368,25 +378,38 @@ export default function Dashboard() {
             mb: 4,
           }}
         >
-          A snapshot of orders, revenue, and gifting activity across your companies
+          {isCompanyAdminOrHr
+            ? `A snapshot of HR managers, employees, orders, and gifting spend for ${summary.company_name || "your organization"}`
+            : "A snapshot of orders, revenue, and gifting activity across all companies"}
         </Typography>
 
         <Grid container spacing={3}>
           {/* Summary Cards */}
-          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-            <KpiCard
-              icon={<Building2 size={20} />}
-              label="Total Companies"
-              value={summary.total_companies ?? "—"}
-              accent={PRIMARY}
-            />
-          </Grid>
+          {isCompanyAdminOrHr ? (
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <KpiCard
+                icon={<UserCheck size={20} />}
+                label="HR Managers"
+                value={summary.total_hrs ?? 0}
+                accent={PRIMARY}
+              />
+            </Grid>
+          ) : (
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+              <KpiCard
+                icon={<Building2 size={20} />}
+                label="Total Companies"
+                value={summary.total_companies ?? 0}
+                accent={PRIMARY}
+              />
+            </Grid>
+          )}
 
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               icon={<Users size={20} />}
               label="Total Employees"
-              value={summary.total_employees ?? "—"}
+              value={summary.total_employees ?? 0}
               accent={BLUE}
             />
           </Grid>
@@ -394,8 +417,8 @@ export default function Dashboard() {
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               icon={<ShoppingBag size={20} />}
-              label="Total Orders"
-              value={summary.total_orders ?? "—"}
+              label={isCompanyAdminOrHr ? "Company Orders" : "Total Orders"}
+              value={summary.total_orders ?? 0}
               accent={GOLD}
             />
           </Grid>
@@ -403,8 +426,8 @@ export default function Dashboard() {
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <KpiCard
               icon={<Wallet size={20} />}
-              label="Total Revenue"
-              value={`₹ ${summary.total_revenue ?? "—"}`}
+              label={isCompanyAdminOrHr ? "Gifting Spend" : "Total Revenue"}
+              value={`₹ ${summary.total_revenue ?? 0}`}
               accent={GREEN}
             />
           </Grid>
@@ -448,7 +471,7 @@ export default function Dashboard() {
 
           {/* Monthly Revenue Chart */}
           <Grid size={{ xs: 12, md: 6 }}>
-            <ChartCard icon={<Wallet size={17} />} title="Monthly Revenue" accent={GREEN}>
+            <ChartCard icon={<Wallet size={17} />} title={isCompanyAdminOrHr ? "Monthly Gifting Spend" : "Monthly Revenue"} accent={GREEN}>
               <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={monthlyRevenue}>
                   <defs>
@@ -484,7 +507,7 @@ export default function Dashboard() {
           </Grid>
 
           {/* Top Gifts */}
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Grid size={{ xs: 12, md: isCompanyAdminOrHr ? 12 : 6 }}>
             <ChartCard icon={<Gift size={17} />} title="Top Gifts" accent={GOLD}>
               <RankedList
                 items={topGifts}
@@ -496,22 +519,24 @@ export default function Dashboard() {
             </ChartCard>
           </Grid>
 
-          {/* Top Companies */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <ChartCard icon={<Briefcase size={17} />} title="Top Companies" accent={BLUE}>
-              <RankedList
-                items={topCompanies}
-                nameKey="company_name"
-                valueKey="orders"
-                accent={BLUE}
-                emptyLabel="No data yet"
-              />
-            </ChartCard>
-          </Grid>
+          {/* Top Companies (Super Admin Only) */}
+          {!isCompanyAdminOrHr && (
+            <Grid size={{ xs: 12, md: 6 }}>
+              <ChartCard icon={<Briefcase size={17} />} title="Top Companies" accent={BLUE}>
+                <RankedList
+                  items={topCompanies}
+                  nameKey="company_name"
+                  valueKey="orders"
+                  accent={BLUE}
+                  emptyLabel="No data yet"
+                />
+              </ChartCard>
+            </Grid>
+          )}
 
           {/* Order Status */}
           <Grid size={12}>
-            <ChartCard icon={<Ticket size={17} />} title="Order Status" accent={CORAL}>
+            <ChartCard icon={<Ticket size={17} />} title="Order Status Breakdown" accent={CORAL}>
               <Grid container spacing={2} sx={{ alignItems: "center" }}>
                 <Grid size={{ xs: 12, md: 7 }}>
                   <Box sx={{ position: "relative" }}>

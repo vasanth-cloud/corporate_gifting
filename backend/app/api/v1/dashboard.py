@@ -15,8 +15,9 @@ router = APIRouter(
 @router.get("/summary")
 def get_dashboard_summary(
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
-    return DashboardService.summary(db)
+    return DashboardService.summary(db, current_user)
 
 
 @router.get("/monthly-orders")
@@ -52,4 +53,3 @@ def order_status(
     current_user: User = Depends(get_current_user),
 ):
     return DashboardService.order_status(db)
-

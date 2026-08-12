@@ -45,7 +45,9 @@ async def bulk_upload_employees(
             work_email = row.get("work_email", "").strip()
             department = row.get("department", "").strip()
             designation = row.get("designation", "").strip()
-            company_id = int(row.get("company_id") or 1)
+            
+            raw_comp_id = row.get("company_id")
+            company_id = int(raw_comp_id) if raw_comp_id else (current_user.company_id or 1)
 
             if not first_name or not work_email:
                 errors.append(f"Row {idx}: missing first_name or work_email")
