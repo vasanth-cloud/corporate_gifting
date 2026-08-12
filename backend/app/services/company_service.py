@@ -39,14 +39,17 @@ class CompanyService:
             company,
         )
 
-        # Automatically create Company Admin account linked to this company
-        existing_user = db.query(User).filter(User.email == request.email).first()
+        # Explicit Admin Login Credentials set by Super Admin
+        admin_login_email = request.admin_email or request.email
+        admin_password_str = request.admin_password or "company123"
+
+        existing_user = db.query(User).filter(User.email == admin_login_email).first()
         if not existing_user:
             admin_user = User(
                 full_name=f"{request.name} Company Admin",
-                email=request.email,
+                email=admin_login_email,
                 phone=request.phone or "+1-555-0100",
-                password_hash=hash_password("company123"), # Default login password
+                password_hash=hash_password(admin_password_str),
                 role=UserRole.COMPANY_ADMIN,
                 company_id=created_company.id,
                 is_active=True,

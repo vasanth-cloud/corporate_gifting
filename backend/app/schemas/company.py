@@ -12,7 +12,8 @@ class CompanyBase(BaseModel):
 
 
 class CompanyCreate(CompanyBase):
-    pass
+    admin_email: EmailStr | None = None
+    admin_password: str | None = None
 
 
 class CompanyUpdate(BaseModel):

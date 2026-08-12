@@ -14,6 +14,7 @@ import {
   IconButton,
   Grid,
   Chip,
+  Alert,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -24,6 +25,7 @@ import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
 import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
 import LanguageIcon from "@mui/icons-material/Language";
 import ReceiptIcon from "@mui/icons-material/Receipt";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import { DataGrid } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
 import {
@@ -71,6 +73,8 @@ export default function Companies() {
     address: "",
     logo: "",
     gst_number: "",
+    admin_email: "",
+    admin_password: "",
   });
 
   useEffect(() => {
@@ -98,7 +102,11 @@ export default function Companies() {
       if (editing && selectedId) {
         await updateCompany(selectedId, form);
       } else {
-        await createCompany(form);
+        await createCompany({
+          ...form,
+          admin_email: form.admin_email || form.email,
+          admin_password: form.admin_password || "company123",
+        });
       }
 
       setOpen(false);
@@ -113,6 +121,8 @@ export default function Companies() {
         address: "",
         logo: "",
         gst_number: "",
+        admin_email: "",
+        admin_password: "",
       });
 
       loadCompanies();
@@ -134,6 +144,8 @@ export default function Companies() {
       address: company.address || "",
       logo: company.logo || "",
       gst_number: company.gst_number || "",
+      admin_email: company.email || "",
+      admin_password: "",
     });
 
     setOpen(true);
@@ -149,7 +161,7 @@ export default function Companies() {
     { field: "id", headerName: "ID", width: 80 },
     {
       field: "name",
-      headerName: "Company",
+      headerName: "Company Name",
       flex: 1.2,
       renderCell: (params) => (
         <Stack spacing={1.5} sx={{ flexDirection: "row", alignItems: "center", height: "100%" }}>
@@ -174,8 +186,8 @@ export default function Companies() {
     },
     {
       field: "email",
-      headerName: "Email",
-      flex: 1,
+      headerName: "Company Admin Email",
+      flex: 1.2,
       renderCell: (params) => (
         <Stack spacing={1} sx={{ flexDirection: "row", alignItems: "center", height: "100%" }}>
           <EmailOutlinedIcon sx={{ fontSize: 16, color: INK_SOFT }} />
@@ -201,7 +213,7 @@ export default function Companies() {
     {
       field: "address",
       headerName: "Address",
-      flex: 0.8,
+      flex: 1,
       renderCell: (params) => (
         <Stack spacing={1} sx={{ flexDirection: "row", alignItems: "center", height: "100%" }}>
           <PlaceOutlinedIcon sx={{ fontSize: 16, color: INK_SOFT }} />
@@ -255,12 +267,12 @@ export default function Companies() {
                 letterSpacing: "-0.02em",
               }}
             >
-              {isSuperAdmin ? "Companies Management" : "Company Profile"}
+              {isSuperAdmin ? "Companies Registry" : "Company Profile"}
             </Typography>
           </Stack>
           <Typography sx={{ fontFamily: FONT_BODY, fontSize: 14, color: INK_SOFT }}>
             {isSuperAdmin
-              ? "Platform-wide company registry and account controls"
+              ? "Add client organizations and set up Company Admin login credentials"
               : "Your organization's official profile, address, and contact details"}
           </Typography>
         </Box>
@@ -280,6 +292,8 @@ export default function Companies() {
                 address: "",
                 logo: "",
                 gst_number: "",
+                admin_email: "",
+                admin_password: "",
               });
               setOpen(true);
             }}
@@ -443,14 +457,34 @@ export default function Companies() {
       {/* Edit / Add Modal */}
       <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">
         <DialogTitle sx={{ fontFamily: FONT_DISPLAY, fontWeight: 700, color: INK }}>
-          {editing ? "Edit Company Profile" : "Add New Company"}
+          {editing ? "Edit Company Details" : "Add New Company & Set Admin Credentials"}
         </DialogTitle>
 
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
-          <TextField label="Company Name" name="name" value={form.name} onChange={handleChange} fullWidth />
-          <TextField label="Email" name="email" value={form.email} onChange={handleChange} fullWidth />
-          <TextField label="Phone" name="phone" value={form.phone} onChange={handleChange} fullWidth />
-          <TextField label="Website" name="website" value={form.website} onChange={handleChange} fullWidth />
+          {!editing && (
+            <Alert severity="info" icon={<LockOutlinedIcon />}>
+              The email and password entered below will become the <strong>Company Admin login credentials</strong>!
+            </Alert>
+          )}
+
+          <TextField label="Company Name" name="name" value={form.name} onChange={handleChange} fullWidth required />
+          <TextField label="Company / Admin Login Email" name="email" value={form.email} onChange={handleChange} fullWidth required />
+          
+          {!editing && (
+            <TextField
+              label="Set Admin Login Password"
+              name="admin_password"
+              type="password"
+              value={form.admin_password}
+              onChange={handleChange}
+              placeholder="e.g. acme123"
+              fullWidth
+              required
+            />
+          )}
+
+          <TextField label="Phone Number" name="phone" value={form.phone} onChange={handleChange} fullWidth />
+          <TextField label="Website URL" name="website" value={form.website} onChange={handleChange} fullWidth />
           <TextField label="Address" name="address" value={form.address} onChange={handleChange} fullWidth />
           <TextField label="Logo URL" name="logo" value={form.logo} onChange={handleChange} fullWidth />
           <TextField label="GST Number" name="gst_number" value={form.gst_number} onChange={handleChange} fullWidth />
@@ -459,7 +493,7 @@ export default function Companies() {
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setOpen(false)} sx={{ textTransform: "none" }}>Cancel</Button>
           <Button variant="contained" onClick={handleSubmit} sx={{ backgroundColor: PRIMARY, textTransform: "none", fontWeight: 600 }}>
-            {editing ? "Update Profile" : "Save Company"}
+            {editing ? "Update Profile" : "Save Company & Create Admin Account"}
           </Button>
         </DialogActions>
       </Dialog>
