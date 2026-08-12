@@ -1,14 +1,59 @@
-import React from "react";
-import { Box, Typography, Paper, Avatar, Grid, Chip } from "@mui/material";
-import PersonIcon from "@mui/icons-material/Person";
+import { useEffect, useState } from "react";
+import { Box, Typography, Paper, Avatar, Grid, Chip, CircularProgress } from "@mui/material";
 import EmailIcon from "@mui/icons-material/Email";
 import PhoneIcon from "@mui/icons-material/Phone";
 import BusinessIcon from "@mui/icons-material/Business";
 import BadgeIcon from "@mui/icons-material/Badge";
 import { useAuth } from "../../context/AuthContext";
+import api from "../../services/api";
 
 export default function EmployeeProfile() {
   const { user } = useAuth();
+  const [empProfile, setEmpProfile] = useState<any>(null);
+  const [companyName, setCompanyName] = useState<string>("SNS iHub");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadProfileData();
+  }, [user]);
+
+  const loadProfileData = async () => {
+    setLoading(true);
+    try {
+      const [empRes, compRes] = await Promise.all([
+        api.get("/employees").catch(() => ({ data: [] })),
+        api.get("/companies").catch(() => ({ data: [] })),
+      ]);
+
+      const employees = Array.isArray(empRes.data) ? empRes.data : [];
+      const companies = Array.isArray(compRes.data) ? compRes.data : [];
+
+      const currentEmp = employees.find((e: any) => e.work_email === user?.email) || employees[0];
+      if (currentEmp) {
+        setEmpProfile(currentEmp);
+        const comp = companies.find((c: any) => c.id === currentEmp.company_id);
+        if (comp) setCompanyName(comp.name);
+      }
+    } catch (err) {
+      console.error("Failed to load profile:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ p: 4, display: "flex", justifyContent: "center" }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  const fullName = user?.full_name || (empProfile ? `${empProfile.first_name} ${empProfile.last_name}` : "Employee");
+  const designation = empProfile?.designation || "Corporate Employee";
+  const email = user?.email || empProfile?.work_email || "N/A";
+  const phone = user?.phone || empProfile?.phone || "N/A";
+  const empCode = empProfile?.employee_code || "EMP-1001";
 
   return (
     <Box sx={{ p: { xs: 2, sm: 4 }, maxWidth: 800 }}>
@@ -24,13 +69,13 @@ export default function EmployeeProfile() {
       <Paper elevation={0} sx={{ p: 4, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 3, mb: 4 }}>
           <Avatar sx={{ width: 72, height: 72, bgcolor: "#6366F1", fontSize: 30, fontWeight: 700 }}>
-            {(user?.full_name || "S").charAt(0)}
+            {fullName.charAt(0).toUpperCase()}
           </Avatar>
           <Box>
             <Typography variant="h5" sx={{ fontWeight: 800 }}>
-              {user?.full_name || "Sarah Jenkins"}
+              {fullName}
             </Typography>
-            <Chip label="Senior Software Engineer" color="primary" size="small" sx={{ mt: 0.5, fontWeight: 600 }} />
+            <Chip label={designation} color="primary" size="small" sx={{ mt: 0.5, fontWeight: 600 }} />
           </Box>
         </Box>
 
@@ -40,7 +85,7 @@ export default function EmployeeProfile() {
               <EmailIcon sx={{ color: "#6366F1" }} />
               <Box>
                 <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>Work Email</Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>{user?.email || "sarah.jenkins@acmetech.com"}</Typography>
+                <Typography variant="body1" sx={{ fontWeight: 600 }}>{email}</Typography>
               </Box>
             </Box>
           </Grid>
@@ -50,7 +95,7 @@ export default function EmployeeProfile() {
               <PhoneIcon sx={{ color: "#6366F1" }} />
               <Box>
                 <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>Phone Number</Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>{user?.phone || "+1-555-0188"}</Typography>
+                <Typography variant="body1" sx={{ fontWeight: 600 }}>{phone}</Typography>
               </Box>
             </Box>
           </Grid>
@@ -60,7 +105,7 @@ export default function EmployeeProfile() {
               <BusinessIcon sx={{ color: "#6366F1" }} />
               <Box>
                 <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>Company Organization</Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>Acme Technology Corp</Typography>
+                <Typography variant="body1" sx={{ fontWeight: 600 }}>{companyName}</Typography>
               </Box>
             </Box>
           </Grid>
@@ -69,8 +114,8 @@ export default function EmployeeProfile() {
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
               <BadgeIcon sx={{ color: "#6366F1" }} />
               <Box>
-                <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>Employee ID</Typography>
-                <Typography variant="body1" sx={{ fontWeight: 600 }}>EMP-1001</Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary", display: "block" }}>Employee Code</Typography>
+                <Typography variant="body1" sx={{ fontWeight: 600 }}>{empCode}</Typography>
               </Box>
             </Box>
           </Grid>
