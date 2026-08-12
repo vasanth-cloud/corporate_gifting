@@ -11,43 +11,44 @@ import {
   Avatar,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
+import HomeIcon from "@mui/icons-material/Home";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PendingIcon from "@mui/icons-material/HourglassEmpty";
-import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 import api from "../../services/api";
 
-export default function Recipients() {
+export default function Addresses() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
-  const [recipientData, setRecipientData] = useState<any[]>([]);
+  const [addressData, setAddressData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    loadRecipients();
+    loadAddresses();
   }, []);
 
-  const loadRecipients = async () => {
+  const loadAddresses = async () => {
     setLoading(true);
     try {
-      // Fetch actual campaign vouchers / orders generated for recipients
-      const res = await api.get("/vouchers").catch(() => ({ data: [] }));
-      const voucherList = Array.isArray(res.data) ? res.data : [];
-
-      const list = voucherList.map((v: any) => ({
-        id: v.id,
-        employee: v.recipient_name || v.recipient_email,
-        email: v.recipient_email,
-        department: v.department || "General",
-        selection_status: v.is_redeemed ? "SELECTED" : "PENDING",
-        address_status: v.is_redeemed ? "CONFIRMED" : "PENDING",
-        order_status: v.is_redeemed ? "PROCESSING" : "PENDING",
+      // Fetch orders/vouchers or employee shipping address records
+      const res = await api.get("/orders").catch(() => ({ data: [] }));
+      const orderList = Array.isArray(res.data) ? res.data : [];
+      
+      const list = orderList.map((order: any) => ({
+        id: order.id,
+        employee_name: order.employee_name || "Employee",
+        email: order.employee_email || "N/A",
+        address_line1: order.shipping_address || "Address Pending Confirmation",
+        city: order.city || "—",
+        state: order.state || "—",
+        pincode: order.pincode || "—",
+        status: order.shipping_address ? "CONFIRMED" : "PENDING",
       }));
 
-      setRecipientData(list);
+      setAddressData(list);
     } catch (err) {
-      console.error("Failed to load campaign recipients:", err);
-      setRecipientData([]);
+      console.error("Failed to load addresses:", err);
+      setAddressData([]);
     } finally {
       setLoading(false);
     }
@@ -61,8 +62,8 @@ export default function Recipients() {
       renderCell: (params) => params.api.getRowIndexRelativeToVisibleRows(params.row.id) + 1,
     },
     {
-      field: "employee",
-      headerName: "Employee Recipient",
+      field: "employee_name",
+      headerName: "Employee Name",
       flex: 1.2,
       renderCell: (params) => (
         <Stack spacing={1.5} sx={{ flexDirection: "row", alignItems: "center", height: "100%" }}>
@@ -76,44 +77,29 @@ export default function Recipients() {
         </Stack>
       ),
     },
-    { field: "department", headerName: "Department", flex: 1 },
     {
-      field: "selection_status",
-      headerName: "Gift Choice",
-      width: 140,
+      field: "address_line1",
+      headerName: "Delivery Address",
+      flex: 2,
       renderCell: (params) => (
-        <Chip
-          icon={params.value === "SELECTED" ? <CheckCircleIcon fontSize="small" /> : <PendingIcon fontSize="small" />}
-          label={params.value}
-          color={params.value === "SELECTED" ? "success" : "warning"}
-          size="small"
-          sx={{ fontWeight: 600 }}
-        />
+        <Stack spacing={1} sx={{ flexDirection: "row", alignItems: "center", height: "100%" }}>
+          <HomeIcon sx={{ fontSize: 16, color: "text.secondary" }} />
+          <Typography sx={{ fontSize: 13 }}>{params.value}</Typography>
+        </Stack>
       ),
     },
+    { field: "city", headerName: "City", flex: 0.8 },
+    { field: "state", headerName: "State", flex: 0.8 },
+    { field: "pincode", headerName: "Pincode", flex: 0.8 },
     {
-      field: "address_status",
-      headerName: "Address Status",
-      width: 140,
+      field: "status",
+      headerName: "Confirmation Status",
+      width: 170,
       renderCell: (params) => (
         <Chip
-          label={params.value}
-          color={params.value === "CONFIRMED" ? "primary" : "default"}
-          size="small"
-          variant="outlined"
-          sx={{ fontWeight: 600 }}
-        />
-      ),
-    },
-    {
-      field: "order_status",
-      headerName: "Delivery Order",
-      width: 140,
-      renderCell: (params) => (
-        <Chip
-          icon={<LocalShippingIcon fontSize="small" />}
-          label={params.value}
-          color={params.value === "DELIVERED" ? "success" : params.value === "SHIPPED" ? "info" : "secondary"}
+          icon={params.value === "CONFIRMED" ? <CheckCircleIcon fontSize="small" /> : <PendingIcon fontSize="small" />}
+          label={params.value === "CONFIRMED" ? "CONFIRMED" : "PENDING ADDRESS"}
+          color={params.value === "CONFIRMED" ? "success" : "warning"}
           size="small"
           sx={{ fontWeight: 600 }}
         />
@@ -121,9 +107,9 @@ export default function Recipients() {
     },
   ];
 
-  const filteredRecipients = recipientData.filter((r) => {
-    const matchesSearch = (r.employee || "").toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === "ALL" || r.selection_status === statusFilter;
+  const filteredAddresses = addressData.filter((a) => {
+    const matchesSearch = (a.employee_name || "").toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "ALL" || a.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -131,10 +117,10 @@ export default function Recipients() {
     <Box sx={{ p: { xs: 2, sm: 4 } }}>
       <Box sx={{ mb: 3 }}>
         <Typography variant="h5" sx={{ fontWeight: 700 }}>
-          Campaign Recipients & Fulfillment Status
+          Employee Shipping Addresses
         </Typography>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          Track gift selections, address confirmations, and shipping dispatch status for campaign recipients.
+          View and track recipient home shipping address confirmations for gift deliveries.
         </Typography>
       </Box>
 
@@ -160,19 +146,19 @@ export default function Recipients() {
         <TextField
           select
           size="small"
-          label="Gift Choice Status"
+          label="Address Status"
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          sx={{ width: 180 }}
+          sx={{ width: 200 }}
         >
           <MenuItem value="ALL">All Statuses</MenuItem>
-          <MenuItem value="SELECTED">Selected</MenuItem>
-          <MenuItem value="PENDING">Pending Choice</MenuItem>
+          <MenuItem value="CONFIRMED">Confirmed</MenuItem>
+          <MenuItem value="PENDING">Pending Address</MenuItem>
         </TextField>
       </Paper>
 
       <Paper elevation={0} sx={{ height: 500, borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
-        <DataGrid rows={filteredRecipients} columns={columns} loading={loading} sx={{ border: "none" }} />
+        <DataGrid rows={filteredAddresses} columns={columns} loading={loading} sx={{ border: "none" }} />
       </Paper>
     </Box>
   );

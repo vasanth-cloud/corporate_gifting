@@ -17,6 +17,7 @@ import Reports from "../pages/Reports/Reports";
 
 import HrManagers from "../pages/CompanyAdmin/HrManagers";
 import Recipients from "../pages/CompanyAdmin/Recipients";
+import Addresses from "../pages/CompanyAdmin/Addresses";
 import Budgets from "../pages/CompanyAdmin/Budgets";
 import Approvals from "../pages/CompanyAdmin/Approvals";
 import Deliveries from "../pages/Deliveries/Deliveries";
@@ -90,7 +91,7 @@ export default function AppRoutes() {
         <Route path="hr/employees" element={<Employees />} />
         <Route path="hr/campaigns" element={<Campaigns />} />
         <Route path="hr/recipients" element={<Recipients />} />
-        <Route path="hr/addresses" element={<Recipients />} />
+        <Route path="hr/addresses" element={<Addresses />} />
         <Route path="hr/orders" element={<Orders />} />
         <Route path="hr/deliveries" element={<Deliveries />} />
 
