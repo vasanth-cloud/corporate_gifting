@@ -1,7 +1,9 @@
 from fastapi import HTTPException
 from sqlalchemy.orm import Session
 
+from app.core.security import hash_password
 from app.models.company import Company
+from app.models.user import User, UserRole
 from app.repositories.company_repository import CompanyRepository
 from app.schemas.company import CompanyCreate, CompanyUpdate
 
@@ -32,10 +34,28 @@ class CompanyService:
             gst_number=request.gst_number,
         )
 
-        return CompanyRepository.create(
+        created_company = CompanyRepository.create(
             db,
             company,
         )
+
+        # Automatically create Company Admin account linked to this company
+        existing_user = db.query(User).filter(User.email == request.email).first()
+        if not existing_user:
+            admin_user = User(
+                full_name=f"{request.name} Company Admin",
+                email=request.email,
+                phone=request.phone or "+1-555-0100",
+                password_hash=hash_password("company123"), # Default login password
+                role=UserRole.COMPANY_ADMIN,
+                company_id=created_company.id,
+                is_active=True,
+                is_verified=True,
+            )
+            db.add(admin_user)
+            db.commit()
+
+        return created_company
 
     @staticmethod
     def get_all(
