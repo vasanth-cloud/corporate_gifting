@@ -1,15 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
 import { Box, Typography, Paper, Chip } from "@mui/material";
-import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
 
 export default function AuditLogs() {
-  const auditLogs = [
-    { id: 1, action: "USER_LOGIN", user: "admin@corporate.com", role: "SUPER_ADMIN", entity: "AuthSession", ip: "127.0.0.1", timestamp: "2026-08-11 22:00:15" },
-    { id: 2, action: "CREATE_CAMPAIGN", user: "companyadmin@google.com", role: "COMPANY_ADMIN", entity: "Campaign #1", ip: "127.0.0.1", timestamp: "2026-08-11 21:45:00" },
-    { id: 3, action: "CLAIM_VOUCHER", user: "sarah.jenkins@acmetech.com", role: "EMPLOYEE", entity: "Voucher GC-REWARD", ip: "127.0.0.1", timestamp: "2026-08-11 18:50:00" },
-    { id: 4, action: "PAYMENT_CHECKOUT", user: "admin@corporate.com", role: "SUPER_ADMIN", entity: "Order ORD-TSLA-992", ip: "127.0.0.1", timestamp: "2026-08-11 17:30:10" },
-  ];
+  const [auditLogs] = useState<any[]>([]);
 
   const columns: GridColDef[] = [
     { field: "id", headerName: "ID", width: 70 },

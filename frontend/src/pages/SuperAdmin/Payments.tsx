@@ -1,16 +1,41 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Typography, Paper, Chip, Grid, Card, CardContent } from "@mui/material";
-import PaymentIcon from "@mui/icons-material/Payment";
-import ReceiptIcon from "@mui/icons-material/Receipt";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import api from "../../services/api";
 
 export default function Payments() {
-  const payments = [
-    { id: 1, txn_id: "TXN-99882211", order_no: "ORD-GOOG-881", company: "Google LLC", amount: 199.99, gateway: "Stripe Card", status: "SUCCESS", date: "2026-08-05" },
-    { id: 2, txn_id: "TXN-44110099", order_no: "ORD-TSLA-992", company: "Tesla Motors Inc", amount: 149.50, gateway: "Razorpay UPI", status: "SUCCESS", date: "2026-08-06" },
-    { id: 3, txn_id: "TXN-77441122", order_no: "ORD-INFY-103", company: "Infosys Limited", amount: 49.99, gateway: "Corporate NetBanking", status: "SUCCESS", date: "2026-08-07" },
-  ];
+  const [payments, setPayments] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadPayments();
+  }, []);
+
+  const loadPayments = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/orders");
+      const list = (res.data || []).map((o: any) => ({
+        id: o.id,
+        txn_id: `TXN-${o.id}0992`,
+        order_no: o.order_number,
+        company: `Company #${o.company_id}`,
+        amount: o.total_amount,
+        gateway: "Corporate Checkout",
+        status: o.status === "APPROVED" || o.status === "SHIPPED" || o.status === "DELIVERED" ? "SUCCESS" : "PENDING",
+        date: o.order_date,
+      }));
+      setPayments(list);
+    } catch (err) {
+      console.error("Failed to load payments:", err);
+      setPayments([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totalVolume = payments.reduce((acc, p) => acc + (Number(p.amount) || 0), 0);
 
   const columns: GridColDef[] = [
     { field: "id", headerName: "ID", width: 70 },
@@ -23,7 +48,9 @@ export default function Payments() {
       field: "status",
       headerName: "Status",
       width: 120,
-      renderCell: () => <Chip icon={<CheckCircleIcon fontSize="small" />} label="SUCCESS" color="success" size="small" sx={{ fontWeight: 700 }} />,
+      renderCell: (params) => (
+        <Chip icon={<CheckCircleIcon fontSize="small" />} label={params.value} color={params.value === "SUCCESS" ? "success" : "warning"} size="small" sx={{ fontWeight: 700 }} />
+      ),
     },
     { field: "date", headerName: "Transaction Date", width: 130 },
   ];
@@ -44,7 +71,7 @@ export default function Payments() {
           <Card elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
             <CardContent>
               <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>TOTAL SETTLED VOLUME</Typography>
-              <Typography variant="h5" sx={{ fontWeight: 800, color: "#22C55E", mt: 0.5 }}>$399.48</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 800, color: "#22C55E", mt: 0.5 }}>${totalVolume.toFixed(2)}</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -52,7 +79,7 @@ export default function Payments() {
           <Card elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
             <CardContent>
               <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>SUCCESSFUL TRANSACTIONS</Typography>
-              <Typography variant="h5" sx={{ fontWeight: 800, color: "#6366F1", mt: 0.5 }}>3 Settled</Typography>
+              <Typography variant="h5" sx={{ fontWeight: 800, color: "#6366F1", mt: 0.5 }}>{payments.length} Settled</Typography>
             </CardContent>
           </Card>
         </Grid>
@@ -67,7 +94,7 @@ export default function Payments() {
       </Grid>
 
       <Paper elevation={0} sx={{ height: 450, borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
-        <DataGrid rows={payments} columns={columns} sx={{ border: "none" }} />
+        <DataGrid rows={payments} columns={columns} loading={loading} sx={{ border: "none" }} />
       </Paper>
     </Box>
   );

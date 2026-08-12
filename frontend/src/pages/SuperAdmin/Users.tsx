@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -18,31 +18,55 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import AddIcon from "@mui/icons-material/Add";
 import PersonIcon from "@mui/icons-material/Person";
-import EmailIcon from "@mui/icons-material/Email";
 import LockResetIcon from "@mui/icons-material/LockReset";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import api from "../../services/api";
 
 export default function Users() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
   const [openModal, setOpenModal] = useState(false);
+  const [users, setUsers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [users, setUsers] = useState<any[]>([
-    { id: 1, full_name: "Super Admin", email: "admin@corporate.com", role: "SUPER_ADMIN", company: "Platform Global", status: "ACTIVE" },
-    { id: 2, full_name: "Google Company Admin", email: "companyadmin@google.com", role: "COMPANY_ADMIN", company: "Google LLC", status: "ACTIVE" },
-    { id: 3, full_name: "Acme HR Manager", email: "hr@acmetech.com", role: "HR_MANAGER", company: "Acme Technology Corp", status: "ACTIVE" },
-    { id: 4, full_name: "Global Tech Vendor", email: "vendor@globalsupplies.com", role: "VENDOR", company: "Global Tech Supplies", status: "ACTIVE" },
-    { id: 5, full_name: "Sarah Jenkins", email: "sarah.jenkins@acmetech.com", role: "EMPLOYEE", company: "Acme Technology Corp", status: "ACTIVE" },
-    { id: 6, full_name: "Elon Musk", email: "elon@tesla.com", role: "EMPLOYEE", company: "Tesla Motors Inc", status: "ACTIVE" },
-  ]);
+  const [newUser, setNewUser] = useState({
+    full_name: "",
+    email: "",
+    role: "COMPANY_ADMIN",
+    password: "",
+    phone: "",
+  });
 
-  const [newUser, setNewUser] = useState({ full_name: "", email: "", role: "COMPANY_ADMIN", password: "user123" });
+  useEffect(() => {
+    loadUsers();
+  }, []);
 
-  const handleCreateUser = () => {
-    if (!newUser.full_name || !newUser.email) return;
-    setUsers([{ id: Date.now(), ...newUser, company: "Assigned Tenant", status: "ACTIVE" }, ...users]);
-    setOpenModal(false);
-    setNewUser({ full_name: "", email: "", role: "COMPANY_ADMIN", password: "user123" });
+  const loadUsers = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/users");
+      setUsers(res.data || []);
+    } catch (err) {
+      console.error("Failed to load users:", err);
+      setUsers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCreateUser = async () => {
+    if (!newUser.full_name || !newUser.email || !newUser.password) {
+      alert("Please fill in full name, email, and password.");
+      return;
+    }
+    try {
+      await api.post("/users", newUser);
+      setOpenModal(false);
+      setNewUser({ full_name: "", email: "", role: "COMPANY_ADMIN", password: "", phone: "" });
+      loadUsers();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || "Failed to create user");
+    }
   };
 
   const columns: GridColDef[] = [
@@ -54,7 +78,7 @@ export default function Users() {
       renderCell: (params) => (
         <Stack spacing={1.5} sx={{ flexDirection: "row", alignItems: "center", height: "100%" }}>
           <Avatar sx={{ width: 32, height: 32, bgcolor: "#6366F1", fontSize: 13, fontWeight: 700 }}>
-            {(params.value || "U").charAt(0)}
+            {(params.value || "U").charAt(0).toUpperCase()}
           </Avatar>
           <Box>
             <Typography sx={{ fontWeight: 600, fontSize: 13.5 }}>{params.value}</Typography>
@@ -70,19 +94,26 @@ export default function Users() {
       renderCell: (params) => (
         <Chip
           icon={<PersonIcon fontSize="small" />}
-          label={params.value.replace("_", " ")}
+          label={(params.value || "").replace("_", " ")}
           color={params.value === "SUPER_ADMIN" ? "secondary" : params.value === "COMPANY_ADMIN" ? "primary" : params.value === "HR_MANAGER" ? "info" : params.value === "VENDOR" ? "warning" : "default"}
           size="small"
           sx={{ fontWeight: 700 }}
         />
       ),
     },
-    { field: "company", headerName: "Company Tenant", flex: 1.2 },
     {
-      field: "status",
+      field: "company_id",
+      headerName: "Tenant ID",
+      width: 120,
+      valueGetter: (value) => value ? `Company #${value}` : "Global Platform",
+    },
+    {
+      field: "is_active",
       headerName: "Status",
       width: 120,
-      renderCell: () => <Chip label="ACTIVE" color="success" size="small" sx={{ fontWeight: 600 }} />,
+      renderCell: (params) => (
+        <Chip label={params.value ? "ACTIVE" : "INACTIVE"} color={params.value ? "success" : "default"} size="small" sx={{ fontWeight: 600 }} />
+      ),
     },
     {
       field: "actions",
@@ -90,7 +121,7 @@ export default function Users() {
       width: 140,
       sortable: false,
       renderCell: () => (
-        <Button size="small" startIcon={<LockResetIcon />} onClick={() => alert("Password reset email sent!")}>
+        <Button size="small" startIcon={<LockResetIcon />} onClick={() => alert("Password reset notification sent!")}>
           Reset
         </Button>
       ),
@@ -98,7 +129,7 @@ export default function Users() {
   ];
 
   const filteredUsers = users.filter((u) => {
-    const matchesSearch = u.full_name.toLowerCase().includes(searchTerm.toLowerCase()) || u.email.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (u.full_name || "").toLowerCase().includes(searchTerm.toLowerCase()) || (u.email || "").toLowerCase().includes(searchTerm.toLowerCase());
     const matchesRole = roleFilter === "ALL" || u.role === roleFilter;
     return matchesSearch && matchesRole;
   });
@@ -157,7 +188,7 @@ export default function Users() {
       </Paper>
 
       <Paper elevation={0} sx={{ height: 500, borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
-        <DataGrid rows={filteredUsers} columns={columns} sx={{ border: "none" }} />
+        <DataGrid rows={filteredUsers} columns={columns} loading={loading} sx={{ border: "none" }} />
       </Paper>
 
       <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="xs">
@@ -165,6 +196,7 @@ export default function Users() {
         <DialogContent sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 1 }}>
           <TextField label="Full Name" value={newUser.full_name} onChange={(e) => setNewUser({ ...newUser, full_name: e.target.value })} fullWidth required />
           <TextField label="Email Address" type="email" value={newUser.email} onChange={(e) => setNewUser({ ...newUser, email: e.target.value })} fullWidth required />
+          <TextField label="Phone Number" value={newUser.phone} onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })} fullWidth />
           <TextField select label="Role Permission" value={newUser.role} onChange={(e) => setNewUser({ ...newUser, role: e.target.value })} fullWidth>
             <MenuItem value="SUPER_ADMIN">SUPER_ADMIN</MenuItem>
             <MenuItem value="COMPANY_ADMIN">COMPANY_ADMIN</MenuItem>
@@ -172,7 +204,7 @@ export default function Users() {
             <MenuItem value="EMPLOYEE">EMPLOYEE</MenuItem>
             <MenuItem value="VENDOR">VENDOR</MenuItem>
           </TextField>
-          <TextField label="Initial Password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} fullWidth />
+          <TextField label="Login Password" type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} fullWidth required />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>
           <Button onClick={() => setOpenModal(false)}>Cancel</Button>

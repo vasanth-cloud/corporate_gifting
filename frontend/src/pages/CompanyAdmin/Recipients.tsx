@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -15,18 +15,39 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PendingIcon from "@mui/icons-material/HourglassEmpty";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import api from "../../services/api";
 
 export default function Recipients() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("ALL");
+  const [recipientData, setRecipientData] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const recipientData = [
-    { id: 1, employee: "Sundar Pichai", email: "sundar@google.com", campaign: "Google Annual Founder Rewards", gift: "Noise-Canceling Headphones", selection_status: "SELECTED", address_status: "CONFIRMED", order_status: "SHIPPED" },
-    { id: 2, employee: "Marissa Mayer", email: "marissa@google.com", campaign: "Google Annual Founder Rewards", gift: "Smart Health Fitness Watch", selection_status: "SELECTED", address_status: "CONFIRMED", order_status: "PROCESSING" },
-    { id: 3, employee: "Elon Musk", email: "elon@tesla.com", campaign: "Tesla Innovation Excellence Awards", gift: "Smart Health Fitness Watch", selection_status: "SELECTED", address_status: "CONFIRMED", order_status: "APPROVED" },
-    { id: 4, employee: "Gwynne Shotwell", email: "gwynne@tesla.com", campaign: "Tesla Innovation Excellence Awards", gift: "Pending Choice", selection_status: "PENDING", address_status: "PENDING", order_status: "PENDING" },
-    { id: 5, employee: "Sarah Jenkins", email: "sarah.jenkins@acmetech.com", campaign: "Diwali Employee Celebration", gift: "Leather Journal Set", selection_status: "SELECTED", address_status: "CONFIRMED", order_status: "DELIVERED" },
-  ];
+  useEffect(() => {
+    loadRecipients();
+  }, []);
+
+  const loadRecipients = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/employees");
+      const list = (res.data || []).map((emp: any) => ({
+        id: emp.id,
+        employee: `${emp.first_name || ""} ${emp.last_name || ""}`.trim() || emp.employee_code,
+        email: emp.work_email,
+        department: emp.department,
+        selection_status: "PENDING",
+        address_status: "PENDING",
+        order_status: "PENDING",
+      }));
+      setRecipientData(list);
+    } catch (err) {
+      console.error("Failed to load recipients:", err);
+      setRecipientData([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const columns: GridColDef[] = [
     { field: "id", headerName: "ID", width: 70 },
@@ -46,8 +67,7 @@ export default function Recipients() {
         </Stack>
       ),
     },
-    { field: "campaign", headerName: "Campaign", flex: 1.2 },
-    { field: "gift", headerName: "Selected Gift", flex: 1.2 },
+    { field: "department", headerName: "Department", flex: 1 },
     {
       field: "selection_status",
       headerName: "Gift Choice",
@@ -93,7 +113,7 @@ export default function Recipients() {
   ];
 
   const filteredRecipients = recipientData.filter((r) => {
-    const matchesSearch = r.employee.toLowerCase().includes(searchTerm.toLowerCase()) || r.campaign.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = (r.employee || "").toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "ALL" || r.selection_status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -112,7 +132,7 @@ export default function Recipients() {
       {/* Filter Bar */}
       <Paper elevation={0} sx={{ p: 2, mb: 3, borderRadius: 3, border: "1px solid", borderColor: "divider", display: "flex", gap: 2 }}>
         <TextField
-          placeholder="Search by employee or campaign..."
+          placeholder="Search by employee name..."
           size="small"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
@@ -143,7 +163,7 @@ export default function Recipients() {
       </Paper>
 
       <Paper elevation={0} sx={{ height: 500, borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
-        <DataGrid rows={filteredRecipients} columns={columns} sx={{ border: "none" }} />
+        <DataGrid rows={filteredRecipients} columns={columns} loading={loading} sx={{ border: "none" }} />
       </Paper>
     </Box>
   );

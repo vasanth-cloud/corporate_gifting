@@ -11,19 +11,13 @@ import {
   DialogContent,
   DialogActions,
   TextField,
-  IconButton,
   Chip,
-  Alert,
-  CircularProgress,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import PeopleIcon from "@mui/icons-material/People";
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import PhoneOutlinedIcon from "@mui/icons-material/PhoneOutlined";
-import EditIcon from "@mui/icons-material/Edit";
-import DeleteIcon from "@mui/icons-material/Delete";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
-import { getMe } from "../../api/auth";
+import api from "../../services/api";
 
 export default function HrManagers() {
   const [managers, setManagers] = useState<any[]>([]);
@@ -33,7 +27,7 @@ export default function HrManagers() {
     full_name: "",
     email: "",
     phone: "",
-    password: "hr123",
+    password: "",
   });
 
   useEffect(() => {
@@ -43,32 +37,36 @@ export default function HrManagers() {
   const loadHrManagers = async () => {
     setLoading(true);
     try {
-      // Demo HR Manager list scoped to company
-      const mockHR = [
-        { id: 1, full_name: "Acme HR Manager", email: "hr@acmetech.com", phone: "+1-555-0144", role: "HR_MANAGER", is_active: true },
-        { id: 2, full_name: "Google HR Lead", email: "hr@google.com", phone: "+1-650-253-1111", role: "HR_MANAGER", is_active: true },
-      ];
-      setManagers(mockHR);
+      const res = await api.get("/users");
+      const hrOnly = (res.data || []).filter((u: any) => u.role === "HR_MANAGER");
+      setManagers(hrOnly);
     } catch (err) {
       console.error(err);
+      setManagers([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleAddHR = () => {
-    if (!form.full_name || !form.email) return;
-    const newHR = {
-      id: Date.now(),
-      full_name: form.full_name,
-      email: form.email,
-      phone: form.phone,
-      role: "HR_MANAGER",
-      is_active: true,
-    };
-    setManagers([newHR, ...managers]);
-    setOpen(false);
-    setForm({ full_name: "", email: "", phone: "", password: "hr123" });
+  const handleAddHR = async () => {
+    if (!form.full_name || !form.email || !form.password) {
+      alert("Please enter full name, email, and temporary password.");
+      return;
+    }
+    try {
+      await api.post("/users", {
+        full_name: form.full_name,
+        email: form.email,
+        phone: form.phone,
+        password: form.password,
+        role: "HR_MANAGER",
+      });
+      setOpen(false);
+      setForm({ full_name: "", email: "", phone: "", password: "" });
+      loadHrManagers();
+    } catch (err: any) {
+      alert(err.response?.data?.detail || "Failed to create HR Manager");
+    }
   };
 
   const columns: GridColDef[] = [
@@ -104,7 +102,7 @@ export default function HrManagers() {
       renderCell: (params) => (
         <Stack spacing={1} sx={{ flexDirection: "row", alignItems: "center", height: "100%" }}>
           <PhoneOutlinedIcon sx={{ fontSize: 16, color: "text.secondary" }} />
-          <Typography sx={{ fontSize: 13.5 }}>{params.value}</Typography>
+          <Typography sx={{ fontSize: 13.5 }}>{params.value || "N/A"}</Typography>
         </Stack>
       ),
     },
@@ -112,8 +110,8 @@ export default function HrManagers() {
       field: "is_active",
       headerName: "Status",
       width: 120,
-      renderCell: () => (
-        <Chip label="Active HR" color="success" size="small" sx={{ fontWeight: 600 }} />
+      renderCell: (params) => (
+        <Chip label={params.value ? "Active HR" : "Inactive"} color={params.value ? "success" : "default"} size="small" sx={{ fontWeight: 600 }} />
       ),
     },
   ];
@@ -171,9 +169,11 @@ export default function HrManagers() {
           />
           <TextField
             label="Temporary Password"
+            type="password"
             value={form.password}
             onChange={(e) => setForm({ ...form, password: e.target.value })}
             fullWidth
+            required
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>

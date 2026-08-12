@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -13,20 +13,30 @@ import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import SavingsIcon from "@mui/icons-material/Savings";
+import api from "../../services/api";
 
 export default function Budgets() {
-  const budgetSummary = {
-    total_annual_budget: 100000.0,
-    allocated: 65000.0,
-    spent: 34500.0,
-    remaining: 35000.0,
+  const [campaignBudgets, setCampaignBudgets] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadBudgets();
+  }, []);
+
+  const loadBudgets = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/campaigns");
+      setCampaignBudgets(res.data || []);
+    } catch (err) {
+      console.error("Failed to load campaign budgets:", err);
+      setCampaignBudgets([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const campaignBudgets = [
-    { title: "Diwali Employee Celebration 2026", department: "Company Wide", allocated: 50000, spent: 24500, status: "ACTIVE" },
-    { title: "Engineering Innovation Awards", department: "Engineering", allocated: 30000, spent: 10000, status: "ACTIVE" },
-    { title: "Sales Performance Rewards", department: "Sales", allocated: 20000, spent: 0, status: "PLANNED" },
-  ];
+  const totalAllocated = campaignBudgets.reduce((acc, c) => acc + (Number(c.budget) || 0), 0);
 
   return (
     <Box sx={{ p: { xs: 2, sm: 4 } }}>
@@ -35,7 +45,7 @@ export default function Budgets() {
           Company Budget & Expenditure Management
         </Typography>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          Monitor annual gifting budgets, campaign allocations, department caps, and remaining funds.
+          Monitor campaign allocations, spending caps, and remaining unallocated funds.
         </Typography>
       </Box>
 
@@ -45,11 +55,11 @@ export default function Budgets() {
           <Card elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
             <CardContent>
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>TOTAL ANNUAL BUDGET</Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>TOTAL ALLOCATED BUDGET</Typography>
                 <AccountBalanceWalletIcon sx={{ color: "#6366F1" }} />
               </Box>
               <Typography variant="h5" sx={{ fontWeight: 800, color: "#6366F1" }}>
-                ${budgetSummary.total_annual_budget.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                ${totalAllocated.toLocaleString("en-US", { minimumFractionDigits: 2 })}
               </Typography>
             </CardContent>
           </Card>
@@ -59,11 +69,11 @@ export default function Budgets() {
           <Card elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
             <CardContent>
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>ALLOCATED TO CAMPAIGNS</Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>ACTIVE CAMPAIGNS</Typography>
                 <TrendingUpIcon sx={{ color: "#3B82F6" }} />
               </Box>
               <Typography variant="h5" sx={{ fontWeight: 800, color: "#3B82F6" }}>
-                ${budgetSummary.allocated.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                {campaignBudgets.length} Active
               </Typography>
             </CardContent>
           </Card>
@@ -73,11 +83,11 @@ export default function Budgets() {
           <Card elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
             <CardContent>
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>SPENT (ORDER FULFILLMENTS)</Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>FULFILLMENT SPEND</Typography>
                 <CheckCircleOutlinedIcon sx={{ color: "#22C55E" }} />
               </Box>
               <Typography variant="h5" sx={{ fontWeight: 800, color: "#22C55E" }}>
-                ${budgetSummary.spent.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                $0.00
               </Typography>
             </CardContent>
           </Card>
@@ -87,11 +97,11 @@ export default function Budgets() {
           <Card elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
             <CardContent>
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
-                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>REMAINING UNALLOCATED</Typography>
+                <Typography variant="caption" sx={{ color: "text.secondary", fontWeight: 700 }}>REMAINING BUDGET</Typography>
                 <SavingsIcon sx={{ color: "#EAB308" }} />
               </Box>
               <Typography variant="h5" sx={{ fontWeight: 800, color: "#EAB308" }}>
-                ${budgetSummary.remaining.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+                ${totalAllocated.toLocaleString("en-US", { minimumFractionDigits: 2 })}
               </Typography>
             </CardContent>
           </Card>
@@ -104,26 +114,31 @@ export default function Budgets() {
           Campaign Budget Breakdown
         </Typography>
 
-        {campaignBudgets.map((item, idx) => {
-          const percentSpent = Math.round((item.spent / item.allocated) * 100);
-          return (
+        {campaignBudgets.length === 0 ? (
+          <Typography color="text.secondary" sx={{ py: 3, textAlign: "center" }}>
+            No active campaigns found. Create campaigns to allocate gifting budgets.
+          </Typography>
+        ) : (
+          campaignBudgets.map((item, idx) => (
             <Box key={idx} sx={{ mb: 3, p: 2, borderRadius: 2, bgcolor: "action.hover" }}>
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1 }}>
                 <Box>
                   <Typography sx={{ fontWeight: 700, fontSize: 15 }}>{item.title}</Typography>
-                  <Typography variant="caption" sx={{ color: "text.secondary" }}>Department: {item.department}</Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    Dates: {item.start_date} to {item.end_date}
+                  </Typography>
                 </Box>
                 <Chip label={item.status} color={item.status === "ACTIVE" ? "success" : "default"} size="small" sx={{ fontWeight: 600 }} />
               </Box>
 
               <Box sx={{ display: "flex", justifyContent: "space-between", fontSize: 13, color: "text.secondary", mb: 1 }}>
-                <span>Spent: ${item.spent.toLocaleString()} / Allocated: ${item.allocated.toLocaleString()}</span>
-                <span>{percentSpent}% Used</span>
+                <span>Allocated Budget: ${Number(item.budget).toLocaleString()}</span>
+                <span>0% Used</span>
               </Box>
-              <LinearProgress variant="determinate" value={percentSpent} sx={{ height: 8, borderRadius: 4, bgcolor: "#E2E8F0" }} />
+              <LinearProgress variant="determinate" value={0} sx={{ height: 8, borderRadius: 4, bgcolor: "#E2E8F0" }} />
             </Box>
-          );
-        })}
+          ))
+        )}
       </Paper>
     </Box>
   );

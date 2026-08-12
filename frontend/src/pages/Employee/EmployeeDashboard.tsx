@@ -1,23 +1,38 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Typography, Paper, Grid, Card, CardContent, Button, Avatar, Chip, Stack } from "@mui/material";
 import CardGiftcardIcon from "@mui/icons-material/CardGiftcard";
 import ConfirmationNumberIcon from "@mui/icons-material/ConfirmationNumber";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../context/AuthContext";
+import api from "../../services/api";
 
 export default function EmployeeDashboard() {
   const { user } = useAuth();
   const userName = user?.full_name || "Employee";
 
-  const myGifts = [
-    { title: "Diwali Employee Celebration 2026", voucher: "GC-REWARD", value: "$250.00", status: "AVAILABLE", deadline: "2026-10-15" },
-  ];
+  const [myGifts, setMyGifts] = useState<any[]>([]);
+  const [myOrders, setMyOrders] = useState<any[]>([]);
 
-  const myOrders = [
-    { order_no: "VOUCH-88A12B", gift: "Wireless Noise-Canceling Headphones", date: "2026-08-07", status: "PROCESSING", tracking: "DEL-102938" },
-  ];
+  useEffect(() => {
+    loadData();
+  }, []);
+
+  const loadData = async () => {
+    try {
+      const vRes = await api.get("/vouchers");
+      setMyGifts(vRes.data || []);
+    } catch (err) {
+      setMyGifts([]);
+    }
+
+    try {
+      const oRes = await api.get("/orders");
+      setMyOrders(oRes.data || []);
+    } catch (err) {
+      setMyOrders([]);
+    }
+  };
 
   return (
     <Box sx={{ p: { xs: 2, sm: 4 } }}>
@@ -38,7 +53,7 @@ export default function EmployeeDashboard() {
               Welcome back, {userName}! 🎁
             </Typography>
             <Typography variant="body1" sx={{ opacity: 0.9 }}>
-              You have 1 active corporate reward voucher ready to redeem.
+              You have {myGifts.length} active corporate reward voucher(s) ready to redeem.
             </Typography>
           </Box>
 
@@ -60,32 +75,40 @@ export default function EmployeeDashboard() {
       </Typography>
 
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        {myGifts.map((g, idx) => (
-          <Grid key={idx} size={{ xs: 12, md: 6 }}>
-            <Card elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
-              <CardContent sx={{ p: 3 }}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-                  <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>{g.title}</Typography>
-                  <Chip label={`Value: ${g.value}`} color="success" size="small" sx={{ fontWeight: 700 }} />
-                </Box>
-
-                <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
-                  Voucher Code: <strong>{g.voucher}</strong> • Valid until {g.deadline}
-                </Typography>
-
-                <Button
-                  component={Link}
-                  to="/claim-gift"
-                  variant="outlined"
-                  fullWidth
-                  sx={{ borderRadius: 2.5, textTransform: "none", fontWeight: 600 }}
-                >
-                  Redeem Gift Now
-                </Button>
-              </CardContent>
-            </Card>
+        {myGifts.length === 0 ? (
+          <Grid size={{ xs: 12 }}>
+            <Paper sx={{ p: 3, textAlign: "center", borderRadius: 3 }}>
+              <Typography color="text.secondary">No active reward vouchers assigned yet.</Typography>
+            </Paper>
           </Grid>
-        ))}
+        ) : (
+          myGifts.map((g, idx) => (
+            <Grid key={idx} size={{ xs: 12, md: 6 }}>
+              <Card elevation={0} sx={{ border: "1px solid", borderColor: "divider", borderRadius: 3 }}>
+                <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
+                    <Typography variant="subtitle1" sx={{ fontWeight: 700 }}>Voucher Rewards</Typography>
+                    <Chip label={`Value: $${g.amount}`} color="success" size="small" sx={{ fontWeight: 700 }} />
+                  </Box>
+
+                  <Typography variant="body2" sx={{ color: "text.secondary", mb: 2 }}>
+                    Voucher Code: <strong>{g.code}</strong> • Recipient: {g.recipient_name || g.recipient_email}
+                  </Typography>
+
+                  <Button
+                    component={Link}
+                    to="/claim-gift"
+                    variant="outlined"
+                    fullWidth
+                    sx={{ borderRadius: 2.5, textTransform: "none", fontWeight: 600 }}
+                  >
+                    Redeem Gift Now
+                  </Button>
+                </CardContent>
+              </Card>
+            </Grid>
+          ))
+        )}
       </Grid>
 
       {/* Recent Orders */}
@@ -94,28 +117,32 @@ export default function EmployeeDashboard() {
       </Typography>
 
       <Paper elevation={0} sx={{ p: 3, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
-        {myOrders.map((ord, idx) => (
-          <Box key={idx} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-              <Avatar sx={{ bgcolor: "#EEF2FF", color: "#4F46E5" }}>
-                <CardGiftcardIcon />
-              </Avatar>
-              <Box>
-                <Typography sx={{ fontWeight: 700 }}>{ord.gift}</Typography>
-                <Typography variant="caption" sx={{ color: "text.secondary" }}>
-                  Order #{ord.order_no} • {ord.date}
-                </Typography>
+        {myOrders.length === 0 ? (
+          <Typography color="text.secondary" sx={{ textAlign: "center", py: 2 }}>No claimed orders yet.</Typography>
+        ) : (
+          myOrders.map((ord, idx) => (
+            <Box key={idx} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 2, mb: idx < myOrders.length - 1 ? 2 : 0 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+                <Avatar sx={{ bgcolor: "#EEF2FF", color: "#4F46E5" }}>
+                  <CardGiftcardIcon />
+                </Avatar>
+                <Box>
+                  <Typography sx={{ fontWeight: 700 }}>Order #{ord.order_number}</Typography>
+                  <Typography variant="caption" sx={{ color: "text.secondary" }}>
+                    Total: ${ord.total_amount} • Date: {ord.order_date}
+                  </Typography>
+                </Box>
               </Box>
-            </Box>
 
-            <Stack spacing={2} sx={{ flexDirection: "row", alignItems: "center" }}>
-              <Chip icon={<LocalShippingIcon fontSize="small" />} label={ord.status} color="info" size="small" sx={{ fontWeight: 600 }} />
-              <Button component={Link} to="/employee/orders" variant="text" size="small">
-                Track Delivery
-              </Button>
-            </Stack>
-          </Box>
-        ))}
+              <Stack spacing={2} sx={{ flexDirection: "row", alignItems: "center" }}>
+                <Chip icon={<LocalShippingIcon fontSize="small" />} label={ord.status} color="info" size="small" sx={{ fontWeight: 600 }} />
+                <Button component={Link} to="/employee/orders" variant="text" size="small">
+                  Track Delivery
+                </Button>
+              </Stack>
+            </Box>
+          ))
+        )}
       </Paper>
     </Box>
   );

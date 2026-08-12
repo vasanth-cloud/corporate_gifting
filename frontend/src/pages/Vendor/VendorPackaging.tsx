@@ -1,25 +1,38 @@
-import React from "react";
-import { Box, Typography, Paper, Chip, Button } from "@mui/material";
+import React, { useEffect, useState } from "react";
+import { Box, Typography, Paper, Chip } from "@mui/material";
 import CardGiftcardIcon from "@mui/icons-material/CardGiftcard";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import api from "../../services/api";
 
 export default function VendorPackaging() {
-  const packagingOrders = [
-    { id: 1, order_no: "VOUCH-88A12B", company: "Acme Tech Corp", logo: "Acme Logo Engraved", message: "Congratulations on your performance!", packaging_type: "Custom Ribbon Box", status: "PACKED" },
-    { id: 2, order_no: "ORD-GOOG-881", company: "Google LLC", logo: "Google Founder Badge", message: "Thank you for leading innovation!", packaging_type: "Executive Hard Box", status: "READY FOR DISPATCH" },
-  ];
+  const [packagingOrders, setPackagingOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadPackaging();
+  }, []);
+
+  const loadPackaging = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/orders");
+      setPackagingOrders(res.data || []);
+    } catch (err) {
+      setPackagingOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const columns: GridColDef[] = [
     { field: "id", headerName: "ID", width: 70 },
-    { field: "order_no", headerName: "Order #", width: 140 },
-    { field: "company", headerName: "Client Company", flex: 1 },
-    { field: "logo", headerName: "Custom Branding Logo", flex: 1 },
-    { field: "message", headerName: "Personalized Message Note", flex: 1.2 },
-    { field: "packaging_type", headerName: "Packaging Type", flex: 1 },
+    { field: "order_number", headerName: "Order #", width: 150 },
+    { field: "company_id", headerName: "Company ID", width: 120 },
+    { field: "order_date", headerName: "Order Date", width: 130 },
     {
       field: "status",
       headerName: "Packaging Status",
-      width: 150,
+      width: 160,
       renderCell: (params) => (
         <Chip icon={<CardGiftcardIcon fontSize="small" />} label={params.value} color="warning" size="small" sx={{ fontWeight: 600 }} />
       ),
@@ -38,7 +51,7 @@ export default function VendorPackaging() {
       </Box>
 
       <Paper elevation={0} sx={{ height: 450, borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
-        <DataGrid rows={packagingOrders} columns={columns} sx={{ border: "none" }} />
+        <DataGrid rows={packagingOrders} columns={columns} loading={loading} sx={{ border: "none" }} />
       </Paper>
     </Box>
   );

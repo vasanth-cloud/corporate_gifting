@@ -16,6 +16,7 @@ from app.api.v1.vendor import router as vendor_router
 from app.api.v1.bulk_upload import router as bulk_upload_router
 from app.api.v1.payment import router as payment_router
 from app.api.v1.voucher import router as voucher_router
+from app.api.v1.users import router as users_router
 
 api_router = APIRouter()
 
@@ -35,3 +36,4 @@ api_router.include_router(upload_router)
 api_router.include_router(bulk_upload_router)
 api_router.include_router(payment_router)
 api_router.include_router(voucher_router)
+api_router.include_router(users_router)

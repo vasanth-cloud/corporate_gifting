@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
@@ -12,26 +12,43 @@ import {
   TextField,
   Alert,
   Stack,
-  Avatar,
 } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
-import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import api from "../../services/api";
 
 export default function Approvals() {
-  const [approvals, setApprovals] = useState<any[]>([
-    { id: 1, type: "CAMPAIGN", title: "Diwali Employee Celebration 2026", requested_by: "Acme HR Manager", date: "2026-08-01", budget: 50000, status: "APPROVED", comments: "Budget approved for corporate drive" },
-    { id: 2, type: "CAMPAIGN", title: "Sales Innovation Incentives", requested_by: "Acme HR Manager", date: "2026-08-05", budget: 20000, status: "PENDING", comments: "Awaiting Company Admin review" },
-    { id: 3, type: "CAMPAIGN", title: "Custom Over-Budget Request", requested_by: "Acme HR Manager", date: "2026-08-06", budget: 85000, status: "REJECTED", comments: "Exceeds department allocated budget cap" },
-  ]);
-
+  const [approvals, setApprovals] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
   const [openModal, setOpenModal] = useState(false);
   const [selectedReq, setSelectedReq] = useState<any | null>(null);
   const [rejectionComment, setRejectionComment] = useState("");
 
-  const handleApprove = (id: number) => {
-    setApprovals(approvals.map(a => a.id === id ? { ...a, status: "APPROVED", comments: "Approved by Company Admin" } : a));
+  useEffect(() => {
+    loadApprovals();
+  }, []);
+
+  const loadApprovals = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/campaigns");
+      setApprovals(res.data || []);
+    } catch (err) {
+      console.error("Failed to load approvals:", err);
+      setApprovals([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleApprove = async (id: number) => {
+    try {
+      await api.put(`/campaigns/${id}`, { status: "ACTIVE" });
+      loadApprovals();
+    } catch (err: any) {
+      alert("Failed to approve campaign");
+    }
   };
 
   const handleRejectClick = (req: any) => {
@@ -40,27 +57,23 @@ export default function Approvals() {
     setOpenModal(true);
   };
 
-  const handleConfirmReject = () => {
+  const handleConfirmReject = async () => {
     if (!selectedReq) return;
-    setApprovals(approvals.map(a => a.id === selectedReq.id ? { ...a, status: "REJECTED", comments: rejectionComment || "Rejected by Company Admin" } : a));
-    setOpenModal(false);
+    try {
+      await api.put(`/campaigns/${selectedReq.id}`, { status: "COMPLETED" });
+      setOpenModal(false);
+      loadApprovals();
+    } catch (err: any) {
+      alert("Failed to update campaign status");
+    }
   };
 
   const columns: GridColDef[] = [
     { field: "id", headerName: "ID", width: 70 },
     { field: "title", headerName: "Campaign Title", flex: 1.4 },
-    {
-      field: "requested_by",
-      headerName: "Requested By",
-      flex: 1,
-      renderCell: (params) => (
-        <Stack spacing={1} sx={{ flexDirection: "row", alignItems: "center", height: "100%" }}>
-          <Avatar sx={{ width: 28, height: 28, bgcolor: "#6366F1", fontSize: 12 }}>{(params.value || "H").charAt(0)}</Avatar>
-          <Typography sx={{ fontSize: 13.5 }}>{params.value}</Typography>
-        </Stack>
-      ),
-    },
     { field: "budget", headerName: "Requested Budget", width: 150, valueFormatter: (value) => `$${Number(value).toLocaleString()}` },
+    { field: "start_date", headerName: "Start Date", width: 130 },
+    { field: "end_date", headerName: "End Date", width: 130 },
     {
       field: "status",
       headerName: "Approval Status",
@@ -68,20 +81,19 @@ export default function Approvals() {
       renderCell: (params) => (
         <Chip
           label={params.value}
-          color={params.value === "APPROVED" ? "success" : params.value === "REJECTED" ? "error" : "warning"}
+          color={params.value === "ACTIVE" ? "success" : params.value === "COMPLETED" ? "error" : "warning"}
           size="small"
           sx={{ fontWeight: 600 }}
         />
       ),
     },
-    { field: "comments", headerName: "Comments / Rejection Reason", flex: 1.2 },
     {
       field: "actions",
       headerName: "Actions",
       width: 180,
       sortable: false,
       renderCell: (params) => (
-        params.row.status === "PENDING" ? (
+        params.row.status === "PLANNED" || params.row.status === "DRAFT" ? (
           <Stack spacing={1} direction="row" sx={{ alignItems: "center", height: "100%" }}>
             <Button size="small" variant="contained" color="success" startIcon={<CheckIcon />} onClick={() => handleApprove(params.row.id)}>
               Approve
@@ -91,7 +103,7 @@ export default function Approvals() {
             </Button>
           </Stack>
         ) : (
-          <Typography variant="caption" sx={{ color: "text.secondary" }}>Completed</Typography>
+          <Typography variant="caption" sx={{ color: "text.secondary" }}>Processed</Typography>
         )
       ),
     },
@@ -109,7 +121,7 @@ export default function Approvals() {
       </Box>
 
       <Paper elevation={0} sx={{ height: 500, borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
-        <DataGrid rows={approvals} columns={columns} sx={{ border: "none" }} />
+        <DataGrid rows={approvals} columns={columns} loading={loading} sx={{ border: "none" }} />
       </Paper>
 
       {/* Reject Modal */}

@@ -1,33 +1,51 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Typography, Paper, Chip, Button, Stack } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
-import CloseIcon from "@mui/icons-material/Close";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import api from "../../services/api";
 
 export default function VendorOrders() {
-  const [orders, setOrders] = useState([
-    { id: 1, order_no: "ORD-GOOG-881", company: "Google LLC", product: "Noise-Canceling Headphones", qty: 1, recipient: "Sundar Pichai", address: "Mountain View, CA", status: "PROCESSING" },
-    { id: 2, order_no: "ORD-TSLA-992", company: "Tesla Motors Inc", product: "Smart Fitness Watch", qty: 1, recipient: "Elon Musk", address: "Austin, TX", status: "PROCESSING" },
-    { id: 3, order_no: "VOUCH-88A12B", company: "Acme Technology Corp", product: "Noise-Canceling Headphones", qty: 1, recipient: "Sarah Jenkins", address: "Bangalore, India", status: "PACKED" },
-  ]);
+  const [orders, setOrders] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const handleAccept = (id: number) => {
-    setOrders(orders.map(o => o.id === id ? { ...o, status: "PACKED" } : o));
+  useEffect(() => {
+    loadVendorOrders();
+  }, []);
+
+  const loadVendorOrders = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/orders");
+      setOrders(res.data || []);
+    } catch (err) {
+      console.error("Failed to load vendor orders:", err);
+      setOrders([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAccept = async (id: number) => {
+    try {
+      await api.put(`/orders/${id}/status`, { status: "PROCESSING" });
+      loadVendorOrders();
+    } catch (err: any) {
+      alert("Failed to accept order");
+    }
   };
 
   const columns: GridColDef[] = [
     { field: "id", headerName: "ID", width: 70 },
-    { field: "order_no", headerName: "Order #", width: 140 },
-    { field: "company", headerName: "Client Company", flex: 1 },
-    { field: "product", headerName: "Product Item", flex: 1.2 },
-    { field: "recipient", headerName: "Recipient Name", flex: 1 },
-    { field: "address", headerName: "Shipping Address", flex: 1.2 },
+    { field: "order_number", headerName: "Order #", width: 150 },
+    { field: "company_id", headerName: "Company ID", width: 120 },
+    { field: "employee_id", headerName: "Employee ID", width: 120 },
+    { field: "total_amount", headerName: "Total Value", width: 120, valueFormatter: (val) => `$${Number(val).toFixed(2)}` },
     {
       field: "status",
       headerName: "Fulfillment Status",
-      width: 140,
+      width: 150,
       renderCell: (params) => (
-        <Chip label={params.value} color={params.value === "PACKED" ? "warning" : "info"} size="small" sx={{ fontWeight: 600 }} />
+        <Chip label={params.value} color={params.value === "APPROVED" || params.value === "SHIPPED" ? "success" : "warning"} size="small" sx={{ fontWeight: 600 }} />
       ),
     },
     {
@@ -36,7 +54,7 @@ export default function VendorOrders() {
       width: 160,
       sortable: false,
       renderCell: (params) => (
-        params.row.status === "PROCESSING" ? (
+        params.row.status === "PENDING" ? (
           <Button size="small" variant="contained" color="success" startIcon={<CheckIcon />} onClick={() => handleAccept(params.row.id)}>
             Accept Order
           </Button>
@@ -59,7 +77,7 @@ export default function VendorOrders() {
       </Box>
 
       <Paper elevation={0} sx={{ height: 450, borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
-        <DataGrid rows={orders} columns={columns} sx={{ border: "none" }} />
+        <DataGrid rows={orders} columns={columns} loading={loading} sx={{ border: "none" }} />
       </Paper>
     </Box>
   );

@@ -1,27 +1,43 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Typography, Paper, Chip } from "@mui/material";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import api from "../../services/api";
 
 export default function VendorProducts() {
-  const products = [
-    { id: 1, name: "Premium Noise-Canceling Headphones", sku: "GIFT-TECH-01", brand: "AudioPro", price: "$199.99", stock: 100, status: "ACTIVE" },
-    { id: 2, name: "Smart Health Fitness Watch", sku: "GIFT-WATCH-02", brand: "FitPulse", price: "$149.50", stock: 80, status: "ACTIVE" },
-    { id: 3, name: "Luxury Italian Leather Journal Set", sku: "GIFT-LUX-03", brand: "Artisan", price: "$49.99", stock: 150, status: "ACTIVE" },
-    { id: 4, name: "Gourmet Coffee & Tumbler Set", sku: "GIFT-FOOD-04", brand: "RoastCo", price: "$39.99", stock: 200, status: "ACTIVE" },
-  ];
+  const [products, setProducts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    loadProducts();
+  }, []);
+
+  const loadProducts = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/gifts");
+      setProducts(res.data || []);
+    } catch (err) {
+      console.error("Failed to load products:", err);
+      setProducts([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const columns: GridColDef[] = [
     { field: "id", headerName: "ID", width: 70 },
     { field: "name", headerName: "Supplied Product Name", flex: 1.2 },
     { field: "sku", headerName: "SKU Code", width: 150 },
     { field: "brand", headerName: "Brand", width: 130 },
-    { field: "price", headerName: "Unit Price", width: 120 },
+    { field: "price", headerName: "Unit Price", width: 120, valueFormatter: (val) => `$${Number(val).toFixed(2)}` },
     { field: "stock", headerName: "In Stock", width: 110 },
     {
-      field: "status",
+      field: "is_active",
       headerName: "Status",
       width: 120,
-      renderCell: () => <Chip label="ACTIVE" color="success" size="small" sx={{ fontWeight: 600 }} />,
+      renderCell: (params) => (
+        <Chip label={params.value ? "ACTIVE" : "INACTIVE"} color={params.value ? "success" : "default"} size="small" sx={{ fontWeight: 600 }} />
+      ),
     },
   ];
 
@@ -37,7 +53,7 @@ export default function VendorProducts() {
       </Box>
 
       <Paper elevation={0} sx={{ height: 450, borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
-        <DataGrid rows={products} columns={columns} sx={{ border: "none" }} />
+        <DataGrid rows={products} columns={columns} loading={loading} sx={{ border: "none" }} />
       </Paper>
     </Box>
   );

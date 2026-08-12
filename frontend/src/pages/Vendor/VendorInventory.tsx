@@ -1,43 +1,63 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Box, Typography, Paper, Button, TextField, Dialog, DialogTitle, DialogContent, DialogActions, Chip } from "@mui/material";
 import { DataGrid, type GridColDef } from "@mui/x-data-grid";
+import api from "../../services/api";
 
 export default function VendorInventory() {
-  const [items, setItems] = useState([
-    { id: 1, name: "Premium Noise-Canceling Headphones", sku: "GIFT-TECH-01", stock: 100, reserved: 12, available: 88, status: "IN_STOCK" },
-    { id: 2, name: "Smart Health Fitness Watch", sku: "GIFT-WATCH-02", stock: 80, reserved: 5, available: 75, status: "IN_STOCK" },
-    { id: 3, name: "Luxury Italian Leather Journal Set", sku: "GIFT-LUX-03", stock: 150, reserved: 20, available: 130, status: "IN_STOCK" },
-  ]);
+  const [items, setItems] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
   const [openModal, setOpenModal] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any | null>(null);
   const [newStock, setNewStock] = useState("");
 
+  useEffect(() => {
+    loadInventory();
+  }, []);
+
+  const loadInventory = async () => {
+    setLoading(true);
+    try {
+      const res = await api.get("/gifts");
+      setItems(res.data || []);
+    } catch (err) {
+      console.error("Failed to load inventory:", err);
+      setItems([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleUpdateClick = (row: any) => {
     setSelectedItem(row);
-    setNewStock(String(row.stock));
+    setNewStock(String(row.stock || 0));
     setOpenModal(true);
   };
 
-  const handleSaveStock = () => {
+  const handleSaveStock = async () => {
     if (!selectedItem) return;
     const qty = parseInt(newStock, 10) || 0;
-    setItems(items.map(i => i.id === selectedItem.id ? { ...i, stock: qty, available: qty - i.reserved } : i));
-    setOpenModal(false);
+    try {
+      await api.put(`/gifts/${selectedItem.id}`, { stock: qty });
+      setOpenModal(false);
+      loadInventory();
+    } catch (err: any) {
+      alert("Failed to update stock");
+    }
   };
 
   const columns: GridColDef[] = [
     { field: "id", headerName: "ID", width: 70 },
     { field: "name", headerName: "Product Name", flex: 1.2 },
     { field: "sku", headerName: "SKU", width: 140 },
-    { field: "stock", headerName: "Total Stock", width: 120 },
-    { field: "reserved", headerName: "Reserved", width: 120 },
-    { field: "available", headerName: "Available Stock", width: 130 },
+    { field: "stock", headerName: "Available Stock", width: 140 },
     {
-      field: "status",
+      field: "is_active",
       headerName: "Stock Status",
       width: 130,
-      renderCell: () => <Chip label="IN STOCK" color="success" size="small" sx={{ fontWeight: 600 }} />,
+      renderCell: (params) => (
+        <Chip label={params.row.stock > 0 ? "IN STOCK" : "OUT OF STOCK"} color={params.row.stock > 0 ? "success" : "error"} size="small" sx={{ fontWeight: 600 }} />
+      ),
     },
     {
       field: "actions",
@@ -59,12 +79,12 @@ export default function VendorInventory() {
           Stock Inventory & Availability Control
         </Typography>
         <Typography variant="body2" sx={{ color: "text.secondary" }}>
-          Monitor total stock, reserved items for active campaigns, and available units.
+          Monitor available units and update product inventory levels.
         </Typography>
       </Box>
 
       <Paper elevation={0} sx={{ height: 450, borderRadius: 3, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
-        <DataGrid rows={items} columns={columns} sx={{ border: "none" }} />
+        <DataGrid rows={items} columns={columns} loading={loading} sx={{ border: "none" }} />
       </Paper>
 
       <Dialog open={openModal} onClose={() => setOpenModal(false)} fullWidth maxWidth="xs">
