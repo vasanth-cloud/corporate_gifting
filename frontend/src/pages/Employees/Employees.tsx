@@ -21,7 +21,6 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import DownloadIcon from "@mui/icons-material/Download";
 import { DataGrid } from "@mui/x-data-grid";
 import type { GridColDef } from "@mui/x-data-grid";
-import axios from "axios";
 
 import {
   getEmployees,
@@ -30,6 +29,7 @@ import {
   deleteEmployee,
 } from "../../api/employee";
 import { getCompanies } from "../../api/company";
+import api from "../../services/api";
 
 const EMPTY_FORM = {
   employee_code: "",
@@ -155,10 +155,9 @@ export default function Employees() {
     formData.append("file", csvFile);
 
     try {
-      const res = await axios.post("http://127.0.0.1:8000/api/v1/employees/bulk-csv", formData, {
+      const res = await api.post("/employees/bulk-csv", formData, {
         headers: {
           "Content-Type": "multipart/form-data",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
         },
       });
       setBulkMessage(res.data.message);
@@ -172,7 +171,7 @@ export default function Employees() {
 
   const downloadSampleCSV = () => {
     const csvContent =
-      "data:text/csv;charset=utf-8,employee_code,first_name,last_name,work_email,department,designation,company_id\nEMP-2001,John,Doe,john.doe@acme.com,Engineering,Developer,1\nEMP-2002,Jane,Smith,jane.smith@acme.com,HR,Manager,1";
+      "data:text/csv;charset=utf-8,employee_code,first_name,last_name,work_email,department,designation\nEMP-101,John,Doe,john.doe@acmetech.com,Engineering,Senior Software Engineer\nEMP-102,Sarah,Jenkins,sarah.jenkins@acmetech.com,Marketing,Brand Specialist\nEMP-103,Michael,Scott,michael.scott@acmetech.com,Sales,Regional Director";
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -183,6 +182,12 @@ export default function Employees() {
   };
 
   const columns: GridColDef[] = [
+    {
+      field: "sno",
+      headerName: "S.No",
+      width: 80,
+      renderCell: (params) => params.api.getRowIndexRelativeToVisibleRows(params.row.id) + 1,
+    },
     {
       field: "employee_code",
       headerName: "Code",
@@ -212,15 +217,6 @@ export default function Employees() {
       field: "designation",
       headerName: "Designation",
       flex: 1,
-    },
-    {
-      field: "company_name",
-      headerName: "Company",
-      flex: 1.3,
-      valueGetter: (_, row) => {
-        const company = companies.find((c) => c.id === row.company_id);
-        return company ? company.name : "";
-      },
     },
     {
       field: "actions",
@@ -254,7 +250,7 @@ export default function Employees() {
     <Box sx={{ p: 3 }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3, flexWrap: "wrap", gap: 2 }}>
         <Typography variant="h4" sx={{ fontWeight: 700 }}>
-          Employees
+          Employees Directory
         </Typography>
 
         <Box sx={{ display: "flex", gap: 1.5 }}>
@@ -421,22 +417,6 @@ export default function Employees() {
             value={form.profile_image}
             onChange={handleChange}
           />
-
-          <FormControl fullWidth>
-            <InputLabel>Company</InputLabel>
-            <Select
-              name="company_id"
-              value={form.company_id}
-              label="Company"
-              onChange={handleChange}
-            >
-              {companies.map((company) => (
-                <MenuItem key={company.id} value={company.id}>
-                  {company.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
         </DialogContent>
 
         <DialogActions>
