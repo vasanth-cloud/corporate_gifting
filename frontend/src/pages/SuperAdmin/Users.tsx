@@ -70,7 +70,7 @@ export default function Users() {
   };
 
   const columns: GridColDef[] = [
-    { field: "id", headerName: "ID", width: 70 },
+    { field: "sno", headerName: "S.No", width: 80, renderCell: (params) => params.api.getRowIndexRelativeToVisibleRows(params.row.id) + 1 },
     {
       field: "full_name",
       headerName: "Full Name",
