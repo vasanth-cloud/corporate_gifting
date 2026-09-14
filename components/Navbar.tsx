@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Gift, Building2, Package, Sparkles, UserCheck, Sun, Moon, Palette } from 'lucide-react';
-import { useTheme, ThemeMode } from '@/lib/ThemeContext';
+import { useTheme, ThemeMode } from '../lib/ThemeContext';
 
 export default function Navbar() {
   const pathname = usePathname();

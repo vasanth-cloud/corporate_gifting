@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { db } from '@/lib/db';
-import { Campaign } from '@/lib/types';
+import { db } from '../../../lib/db';
+import { Campaign } from '../../../lib/types';
 import { Plus, Sparkles, Copy, Check, Link2, Building, Send } from 'lucide-react';
 
 export default function CampaignsPage() {

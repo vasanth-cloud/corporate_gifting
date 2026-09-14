@@ -2,9 +2,9 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { db } from '@/lib/db';
-import { Company } from '@/lib/types';
-import StatusBadge from '@/components/StatusBadge';
+import { db } from '../../lib/db';
+import { Company } from '../../lib/types';
+import StatusBadge from '../../components/StatusBadge';
 import { DollarSign, Gift, Users, CheckCircle2, Plus, Sliders, ArrowUpRight, TrendingUp, Building2, Shield, Lock, LogOut, Key, Sparkles, Check } from 'lucide-react';
 
 export default function AdminDashboardPage() {

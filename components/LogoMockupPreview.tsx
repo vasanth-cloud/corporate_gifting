@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { GiftItem } from '@/lib/types';
+import { GiftItem } from '../lib/types';
 import { Image as ImageIcon, Sliders, Check, Eye, Download, Sparkles, RefreshCw } from 'lucide-react';
 
 interface LogoMockupPreviewProps {

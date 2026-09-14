@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { db } from '@/lib/db';
-import { Order, OrderStatus } from '@/lib/types';
-import StatusBadge from '@/components/StatusBadge';
+import { db } from '../../lib/db';
+import { Order, OrderStatus } from '../../lib/types';
+import StatusBadge from '../../components/StatusBadge';
 import { Package, Download, Truck, FileText, CheckCircle2, Building, RefreshCw } from 'lucide-react';
 
 export default function VendorPortalPage() {

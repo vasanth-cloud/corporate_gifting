@@ -1,5 +1,5 @@
 import React from 'react';
-import { OrderStatus } from '@/lib/types';
+import { OrderStatus } from '../lib/types';
 import { Clock, CheckCircle2, Truck, PackageCheck, Sparkles } from 'lucide-react';
 
 interface StatusBadgeProps {

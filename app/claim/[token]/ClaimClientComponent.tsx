@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { db, MOCK_GIFTS } from '@/lib/db';
-import { GiftItem, ClaimToken, Order } from '@/lib/types';
-import UnboxingExperience from '@/components/UnboxingExperience';
-import StatusBadge from '@/components/StatusBadge';
+import { db, MOCK_GIFTS } from '../../../lib/db';
+import { GiftItem, ClaimToken, Order } from '../../../lib/types';
+import UnboxingExperience from '../../../components/UnboxingExperience';
+import StatusBadge from '../../../components/StatusBadge';
 import { Gift, CheckCircle2, Truck, Sparkles, MapPin, Package, ShieldCheck, ArrowRight } from 'lucide-react';
 
 interface ClaimClientProps {

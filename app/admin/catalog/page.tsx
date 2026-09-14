@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { MOCK_GIFTS } from '@/lib/db';
-import { GiftItem, GiftCategory } from '@/lib/types';
-import LogoMockupPreview from '@/components/LogoMockupPreview';
+import { MOCK_GIFTS } from '../../../lib/db';
+import { GiftItem, GiftCategory } from '../../../lib/types';
+import LogoMockupPreview from '../../../components/LogoMockupPreview';
 import { Filter, Search, Sparkles, Check, PackageCheck } from 'lucide-react';
 
 export default function CatalogPage() {

@@ -1,7 +1,7 @@
 'use client';
 
-import { db } from '@/lib/db';
-import StatusBadge from '@/components/StatusBadge';
+import { db } from '../../../lib/db';
+import StatusBadge from '../../../components/StatusBadge';
 import { Package, Truck, ExternalLink } from 'lucide-react';
 
 export default function OrdersPage() {

@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import Navbar from '@/components/Navbar';
-import { ThemeProvider } from '@/lib/ThemeContext';
+import Navbar from '../components/Navbar';
+import { ThemeProvider } from '../lib/ThemeContext';
 
 export const metadata: Metadata = {
   title: 'GiftPulse | Corporate Gifting & Swag Automation Platform',
