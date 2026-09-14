@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-10px) rotate(1deg); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+
+@keyframes gradientX {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 4s ease-in-out infinite;
+}
+
+.animate-gradient-x {
+  background-size: 200% 200%;
+  animation: gradientX 8s ease infinite;
+}
+
+/* Midnight Dark Theme (Default) */
+.theme-dark {
+  @apply bg-slate-950 text-slate-100;
+}
+
+.theme-dark .glass-card {
+  @apply bg-slate-900/80 backdrop-blur-xl border border-slate-800/80 rounded-2xl shadow-2xl transition-all duration-300 hover:border-indigo-500/40 hover:shadow-indigo-500/10;
+}
+
+.theme-dark .nav-bg {
+  @apply bg-slate-950/80 border-b border-slate-800/80;
+}
+
+/* Corporate Light Theme */
+.theme-light {
+  @apply bg-slate-50 text-slate-900;
+}
+
+.theme-light .glass-card {
+  @apply bg-white/90 backdrop-blur-xl border border-slate-200/80 rounded-2xl shadow-xl transition-all duration-300 hover:border-indigo-500/40 hover:shadow-indigo-500/10 text-slate-900;
+}
+
+.theme-light .nav-bg {
+  @apply bg-white/90 border-b border-slate-200/80 text-slate-900;
+}
+
+.theme-light h1, .theme-light h2, .theme-light h3, .theme-light h4, .theme-light .text-white {
+  color: #0f172a !important;
+}
+
+.theme-light .text-slate-400 {
+  color: #64748b !important;
+}
+
+.theme-light .bg-slate-900 {
+  background-color: #f8fafc !important;
+}
+
+.theme-light .bg-slate-950 {
+  background-color: #ffffff !important;
+}
+
+.theme-light .border-slate-800 {
+  border-color: #e2e8f0 !important;
+}
+
+/* Emerald Luxury Theme */
+.theme-emerald {
+  @apply bg-emerald-950 text-emerald-50;
+}
+
+.theme-emerald .glass-card {
+  @apply bg-emerald-900/40 backdrop-blur-xl border border-emerald-800/60 rounded-2xl shadow-2xl transition-all duration-300 hover:border-emerald-400/40 hover:shadow-emerald-500/10;
+}
+
+.theme-emerald .nav-bg {
+  @apply bg-emerald-950/90 border-b border-emerald-800/80;
+}
+
+.gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 via-purple-400 to-pink-400;
+}
+
+.gradient-border {
+  position: relative;
+  border-radius: 1rem;
+  background: linear-gradient(135deg, rgba(99, 102, 241, 0.3), rgba(168, 85, 247, 0.3), rgba(236, 72, 153, 0.3));
+  padding: 1px;
+}

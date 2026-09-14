@@ -1,0 +1,316 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ------------------------------------------------------
+// 1. TENANT & USER MANAGEMENT
+// ------------------------------------------------------
+
+enum UserRole {
+  SUPER_ADMIN
+  COMPANY_ADMIN
+  HR_MANAGER
+  EMPLOYEE
+  VENDOR_USER
+}
+
+model Company {
+  id               String      @id @default(uuid())
+  name             String
+  slug             String      @unique
+  logoUrl          String?     @map("logo_url")
+  brandColor       String?     @default("indigo") @map("brand_color")
+  employeeCount    Int         @default(0) @map("employee_count")
+  allocatedBudget  Decimal     @default(0.00) @db.Decimal(12, 2) @map("allocated_budget")
+  spentBudget      Decimal     @default(0.00) @db.Decimal(12, 2) @map("spent_budget")
+  createdAt        DateTime    @default(now()) @map("created_at")
+  updatedAt        DateTime    @updatedAt @map("updated_at")
+
+  users            User[]
+  recipients       Recipient[]
+  campaigns        Campaign[]
+  orders           Order[]
+  logoProofs       LogoProof[]
+  auditLogs        AuditLog[]
+
+  @@map("companies")
+}
+
+model User {
+  id           String      @id @default(uuid())
+  email        String      @unique
+  passwordHash String      @map("password_hash")
+  role         UserRole    @default(HR_MANAGER)
+  companyId    String?     @map("company_id")
+  vendorId     String?     @map("vendor_id")
+  isActive     Boolean     @default(true) @map("is_active")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  company      Company?    @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  vendor       Vendor?     @relation(fields: [vendorId], references: [id], onDelete: SetNull)
+  campaigns    Campaign[]  @relation("CampaignCreatedBy")
+  approvals    Approval[]
+  auditLogs    AuditLog[]
+
+  @@index([companyId])
+  @@map("users")
+}
+
+model Recipient {
+  id           String      @id @default(uuid())
+  companyId    String      @map("company_id")
+  employeeId   String?     @map("employee_id")
+  name         String
+  email        String
+  department   String?
+  designation  String?
+  status       String      @default("ACTIVE")
+  createdAt    DateTime    @default(now()) @map("created_at")
+  updatedAt    DateTime    @updatedAt @map("updated_at")
+
+  company      Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  tokens       RedemptionToken[]
+  orders       Order[]
+
+  @@unique([companyId, email])
+  @@map("recipients")
+}
+
+// ------------------------------------------------------
+// 2. VENDORS & CATALOG
+// ------------------------------------------------------
+
+enum VendorIntegrationType {
+  MANUAL
+  API_WEBHOOK
+  CSV_EXPORT
+  MARKETPLACE
+}
+
+model Vendor {
+  id              String                @id @default(uuid())
+  name            String
+  email           String
+  apiEndpoint     String?               @map("api_endpoint")
+  integrationType VendorIntegrationType @default(MANUAL) @map("integration_type")
+  isActive        Boolean               @default(true) @map("is_active")
+  createdAt       DateTime              @default(now()) @map("created_at")
+
+  users           User[]
+  giftItems       GiftItem[]
+  orders          Order[]
+
+  @@map("vendors")
+}
+
+model GiftItem {
+  id            String      @id @default(uuid())
+  vendorId      String      @map("vendor_id")
+  name          String
+  category      String
+  price         Decimal     @db.Decimal(10, 2)
+  description   String
+  imageUrl      String      @map("image_url")
+  customizable  Boolean     @default(true)
+  inStock       Boolean     @default(true) @map("in_stock")
+  createdAt     DateTime    @default(now()) @map("created_at")
+
+  vendor        Vendor      @relation(fields: [vendorId], references: [id])
+  orderItems    OrderItem[]
+
+  @@map("gift_items")
+}
+
+// ------------------------------------------------------
+// 3. CAMPAIGNS & APPROVAL WORKFLOWS
+// ------------------------------------------------------
+
+enum CampaignType {
+  ONBOARDING
+  ANNIVERSARY
+  FESTIVAL
+  CLIENT_APPRECIATION
+  SALES_REWARD
+}
+
+enum CampaignStatus {
+  DRAFT
+  SUBMITTED
+  PENDING_APPROVAL
+  APPROVED
+  ACTIVE
+  COMPLETED
+}
+
+model Campaign {
+  id                 String          @id @default(uuid())
+  companyId          String          @map("company_id")
+  createdById        String          @map("created_by_id")
+  title              String
+  type               CampaignType
+  budgetTotal        Decimal         @db.Decimal(12, 2) @map("budget_total")
+  budgetPerRecipient Decimal         @db.Decimal(10, 2) @map("budget_per_recipient")
+  totalRecipients    Int             @map("total_recipients")
+  claimedCount       Int             @default(0) @map("claimed_count")
+  customMessage      String          @map("custom_message")
+  status             CampaignStatus  @default(DRAFT)
+  startDate          DateTime?       @map("start_date")
+  endDate            DateTime?       @map("end_date")
+  redemptionDeadline DateTime?       @map("redemption_deadline")
+  createdAt          DateTime        @default(now()) @map("created_at")
+  updatedAt          DateTime        @updatedAt @map("updated_at")
+
+  company            Company           @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  createdBy          User              @relation("CampaignCreatedBy", fields: [createdById], references: [id])
+  tokens             RedemptionToken[]
+  approvals          Approval[]
+  orders             Order[]
+
+  @@map("campaigns")
+}
+
+model Approval {
+  id          String    @id @default(uuid())
+  campaignId  String    @map("campaign_id")
+  approverId  String    @map("approver_id")
+  stage       String    // e.g. "FINANCE_APPROVAL", "ADMIN_APPROVAL"
+  status      String    @default("PENDING") // PENDING, APPROVED, REJECTED
+  comments    String?
+  decidedAt   DateTime? @map("decided_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  campaign    Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  approver    User      @relation(fields: [approverId], references: [id])
+
+  @@map("approvals")
+}
+
+// ------------------------------------------------------
+// 4. SECURE MAGIC LINKS & REDEMPTION TOKENS
+// ------------------------------------------------------
+
+model RedemptionToken {
+  id          String    @id @default(uuid())
+  token       String    @unique // Cryptographically secure hex string
+  campaignId  String    @map("campaign_id")
+  recipientId String    @map("recipient_id")
+  isUsed      Boolean   @default(false) @map("is_used")
+  expiresAt   DateTime  @map("expires_at")
+  claimedAt   DateTime? @map("claimed_at")
+  createdAt   DateTime  @default(now()) @map("created_at")
+
+  campaign    Campaign  @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  recipient   Recipient @relation(fields: [recipientId], references: [id], onDelete: Cascade)
+  order       Order?
+
+  @@map("redemption_tokens")
+}
+
+// ------------------------------------------------------
+// 5. ORDERS & LOGISTICS FULFILLMENT
+// ------------------------------------------------------
+
+enum OrderStatus {
+  PENDING
+  LOGO_PROOF_APPROVED
+  IN_PRODUCTION
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id                String            @id @default(uuid())
+  companyId         String            @map("company_id")
+  campaignId        String            @map("campaign_id")
+  recipientId       String            @map("recipient_id")
+  vendorId          String            @map("vendor_id")
+  redemptionTokenId String            @unique @map("redemption_token_id")
+  status            OrderStatus       @default(PENDING)
+  totalAmount       Decimal           @db.Decimal(10, 2) @map("total_amount")
+  courierName       String?           @map("courier_name")
+  trackingNumber    String?           @map("tracking_number")
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  company           Company           @relation(fields: [companyId], references: [id])
+  campaign          Campaign          @relation(fields: [campaignId], references: [id])
+  recipient         Recipient         @relation(fields: [recipientId], references: [id])
+  vendor            Vendor            @relation(fields: [vendorId], references: [id])
+  redemptionToken   RedemptionToken   @relation(fields: [redemptionTokenId], references: [id])
+  orderItems        OrderItem[]
+  shippingAddress   ShippingAddress?
+  logoProofs        LogoProof[]
+
+  @@map("orders")
+}
+
+model OrderItem {
+  id         String   @id @default(uuid())
+  orderId    String   @map("order_id")
+  giftItemId String   @map("gift_item_id")
+  quantity   Int      @default(1)
+  unitPrice  Decimal  @db.Decimal(10, 2) @map("unit_price")
+  variant    String?  // e.g. Size: L, Color: Matte Black
+
+  order      Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  giftItem   GiftItem @relation(fields: [giftItemId], references: [id])
+
+  @@map("order_items")
+}
+
+model ShippingAddress {
+  id          String   @id @default(uuid())
+  orderId     String   @unique @map("order_id")
+  street      String
+  city        String
+  state       String
+  postalCode  String   @map("postal_code")
+  country     String
+  phone       String
+
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@map("shipping_addresses")
+}
+
+model LogoProof {
+  id         String   @id @default(uuid())
+  companyId  String   @map("company_id")
+  orderId    String?  @map("order_id")
+  logoUrl    String   @map("logo_url")
+  placement  String   // e.g. CHEST, CENTER
+  finish     String   // e.g. SCREEN_PRINT, METALLIC_GOLD, DEBOSSED
+  status     String   @default("DRAFT") // DRAFT, SUBMITTED, APPROVED, REJECTED
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  company    Company  @relation(fields: [companyId], references: [id])
+  order      Order?   @relation(fields: [orderId], references: [id])
+
+  @@map("logo_proofs")
+}
+
+// ------------------------------------------------------
+// 6. AUDIT LOGS & COMPLIANCE
+// ------------------------------------------------------
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  companyId String?  @map("company_id")
+  userId    String?  @map("user_id")
+  action    String   // e.g. "CAMPAIGN_CREATED", "GIFT_REDEEMED", "PROOF_APPROVED"
+  details   String
+  ipAddress String?  @map("ip_address")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  company   Company? @relation(fields: [companyId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id])
+
+  @@map("audit_logs")
+}
